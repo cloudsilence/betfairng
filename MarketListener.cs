@@ -1,75 +1,75 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Reactive;
-using System.Reactive.Linq;
-using BetfairNG.Data;
-using System.Reactive.Disposables;
 using System.Collections.Concurrent;
+using System.Linq;
+using System.Reactive.Disposables;
+using System.Reactive.Linq;
 using System.Threading;
+using System.Threading.Tasks;
+using BetfairNG.Data;
 
 namespace BetfairNG
 {
     public class MarketListener
     {
-        private static MarketListener listener = null;
-        private int connectionCount;
-        private PriceProjection priceProjection;        
-        private BetfairClient client;
+        private static MarketListener listener;
         private static DateTime lastRequestStart;
 
         private static DateTime latestDataRequestStart = DateTime.Now;
         private static DateTime latestDataRequestFinish = DateTime.Now;
 
-        private static object lockObj = new object();
+        private static readonly object lockObj = new object();
+        private readonly BetfairClient client;
+        private readonly int connectionCount;
 
-        private ConcurrentDictionary<string, IObservable<MarketBook>> markets =
+        private readonly ConcurrentDictionary<string, IObservable<MarketBook>> markets =
             new ConcurrentDictionary<string, IObservable<MarketBook>>();
 
-        private ConcurrentDictionary<string, IObserver<MarketBook>> observers =
+        private readonly ConcurrentDictionary<string, IObserver<MarketBook>> observers =
             new ConcurrentDictionary<string, IObserver<MarketBook>>();
 
-        private MarketListener(BetfairClient client, 
-            PriceProjection priceProjection, 
-            int connectionCount)
+        private readonly PriceProjection priceProjection;
+
+        private MarketListener(BetfairClient client,
+                               PriceProjection priceProjection,
+                               int connectionCount)
         {
             this.client = client;
             this.priceProjection = priceProjection;
             this.connectionCount = connectionCount;
-            Task.Run(() => PollMarketBooks());
+            Task.Run(() => this.PollMarketBooks());
         }
 
-        public static MarketListener Create(BetfairClient client, 
-            PriceProjection priceProjection, 
-            int connectionCount)
+        public static MarketListener Create(BetfairClient client,
+                                            PriceProjection priceProjection,
+                                            int connectionCount)
         {
             if (listener == null)
+            {
                 listener = new MarketListener(client, priceProjection, connectionCount);
+            }
 
             return listener;
         }
 
         public IObservable<Runner> SubscribeRunner(string marketId, long selectionId)
         {
-            var marketTicks = SubscribeMarketBook(marketId);
+            var marketTicks = this.SubscribeMarketBook(marketId);
 
-            var observable = Observable.Create<Runner>(
-              (IObserver<Runner> observer) =>
-              {
-                  var subscription = marketTicks.Subscribe(tick =>
-                      {
-                          var runner = tick.Runners.First(c => c.SelectionId == selectionId);
-                          // attach the book
-                          runner.MarketBook = tick;
-                          observer.OnNext(runner);
-                      });
+            var observable = Observable.Create(
+                (IObserver<Runner> observer) =>
+                {
+                    var subscription = marketTicks.Subscribe(tick =>
+                    {
+                        var runner = tick.Runners.First(c => c.SelectionId == selectionId);
+                        // attach the book
+                        runner.MarketBook = tick;
+                        observer.OnNext(runner);
+                    });
 
-                  return Disposable.Create(() => subscription.Dispose());
-              })
-              .Publish()
-              .RefCount();
+                    return Disposable.Create(() => subscription.Dispose());
+                })
+                                       .Publish()
+                                       .RefCount();
 
             return observable;
         }
@@ -77,91 +77,99 @@ namespace BetfairNG
         public IObservable<MarketBook> SubscribeMarketBook(string marketId)
         {
             IObservable<MarketBook> market;
-            if (markets.TryGetValue(marketId, out market))
+            if (this.markets.TryGetValue(marketId, out market))
+            {
                 return market;
+            }
 
-            var observable = Observable.Create<MarketBook>(
-               (IObserver<MarketBook> observer) =>
-               {
-                   observers.AddOrUpdate(marketId, observer, (key, existingVal) => existingVal);
-                   return Disposable.Create(() =>
-                       {
-                           IObserver<MarketBook> ob;
-                           IObservable<MarketBook> o;
-                           markets.TryRemove(marketId, out o);
-                           observers.TryRemove(marketId, out ob);
-                       });
-               })
-               .Publish()
-               .RefCount();
+            var observable = Observable.Create(
+                (IObserver<MarketBook> observer) =>
+                {
+                    this.observers.AddOrUpdate(marketId, observer, (key, existingVal) => existingVal);
+                    return Disposable.Create(() =>
+                    {
+                        IObserver<MarketBook> ob;
+                        IObservable<MarketBook> o;
+                        this.markets.TryRemove(marketId, out o);
+                        this.observers.TryRemove(marketId, out ob);
+                    });
+                })
+                                       .Publish()
+                                       .RefCount();
 
-            markets.AddOrUpdate(marketId, observable, (key, existingVal) => existingVal);
+            this.markets.AddOrUpdate(marketId, observable, (key, existingVal) => existingVal);
             return observable;
         }
 
         // TODO:// replace this with the Rx scheduler 
         private void PollMarketBooks()
         {
-            for (int i = 0; i < connectionCount;i++)
+            for (var i = 0; i < this.connectionCount; i++)
             {
                 Task.Run(() =>
+                {
+                    while (true)
                     {
-                        while (true)
+                        if (this.markets.Count > 0)
                         {
-                            if (markets.Count > 0)
+                            // TODO:// look at spinwait or signalling instead of this
+                            while (this.connectionCount > 1 && DateTime.Now.Subtract(lastRequestStart).TotalMilliseconds < (1000 / this.connectionCount))
                             {
-                                // TODO:// look at spinwait or signalling instead of this
-                                while (connectionCount > 1 && DateTime.Now.Subtract(lastRequestStart).TotalMilliseconds < (1000 / connectionCount))
-                                {
-                                    int waitMs = (1000 / connectionCount) - (int)DateTime.Now.Subtract(lastRequestStart).TotalMilliseconds;
-                                    Thread.Sleep(waitMs > 0 ? waitMs : 0);
-                                }
+                                var waitMs = (1000 / this.connectionCount) - (int) DateTime.Now.Subtract(lastRequestStart).TotalMilliseconds;
+                                Thread.Sleep(waitMs > 0 ? waitMs : 0);
+                            }
 
+                            lock (lockObj) lastRequestStart = DateTime.Now;
+
+                            var book = this.client.ListMarketBook(this.markets.Keys.ToList(), this.priceProjection).Result;
+
+                            if (!book.HasError)
+                            {
+                                // we may have fresher data than the response to this request
+                                if (book.RequestStart < latestDataRequestStart && book.LastByte > latestDataRequestFinish)
+                                {
+                                    continue;
+                                }
                                 lock (lockObj)
-                                    lastRequestStart = DateTime.Now;
-
-                                var book = client.ListMarketBook(markets.Keys.ToList(), this.priceProjection).Result;
-
-                                if (!book.HasError)
                                 {
-                                    // we may have fresher data than the response to this request
-                                    if (book.RequestStart < latestDataRequestStart && book.LastByte > latestDataRequestFinish)
-                                        continue;
-                                    else
-                                    {
-                                        lock (lockObj)
-                                        {
-                                            latestDataRequestStart = book.RequestStart;
-                                            latestDataRequestFinish = book.LastByte;
-                                        }
-                                    }
-
-                                    foreach (var market in book.Response)
-                                    {
-                                        IObserver<MarketBook> o;
-                                        if (observers.TryGetValue(market.MarketId, out o))
-                                        {
-                                            // check to see if the market is finished
-                                            if (market.Status == MarketStatus.CLOSED || 
-                                                market.Status == MarketStatus.INACTIVE)
-                                                o.OnCompleted();
-                                            else
-                                                o.OnNext(market);
-                                        }
-                                    }
+                                    latestDataRequestStart = book.RequestStart;
+                                    latestDataRequestFinish = book.LastByte;
                                 }
-                                else
+
+                                foreach (var market in book.Response)
                                 {
-                                    foreach (var observer in observers)
-                                        observer.Value.OnError(book.Error);
+                                    IObserver<MarketBook> o;
+                                    if (this.observers.TryGetValue(market.MarketId, out o))
+                                    {
+                                        // check to see if the market is finished
+                                        if (market.Status == MarketStatus.CLOSED ||
+                                            market.Status == MarketStatus.INACTIVE)
+                                        {
+                                            o.OnCompleted();
+                                        }
+                                        else
+                                        {
+                                            o.OnNext(market);
+                                        }
+                                    }
                                 }
                             }
                             else
-                                // TODO:// will die with rx scheduler
-                                Thread.Sleep(500);
+                            {
+                                foreach (var observer in this.observers)
+                                {
+                                    observer.Value.OnError(book.Error);
+                                }
+                            }
                         }
-                    });
-                Thread.Sleep(1000 / connectionCount);
+                        else
+                        {
+                            // TODO:// will die with rx scheduler
+                            Thread.Sleep(500);
+                        }
+                    }
+                });
+                Thread.Sleep(1000 / this.connectionCount);
             }
         }
     }

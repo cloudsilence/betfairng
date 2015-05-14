@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 
@@ -45,38 +44,37 @@ namespace BetfairNG.Data
 
         public override string ToString()
         {
-            var sb = new StringBuilder().AppendFormat("SelectionId={0}", SelectionId)
-                        .AppendFormat(" : Handicap={0}", Handicap)
-                        .AppendFormat(" : Status={0}", Status)
-                        .AppendFormat(" : AdjustmentFactor={0}", AdjustmentFactor)
-                        .AppendFormat(" : LastPriceTraded={0}", LastPriceTraded)
-                        .AppendFormat(" : TotalMatched={0}", TotalMatched)
-                        .AppendFormat(" : RemovalDate={0}", RemovalDate);
+            var sb = new StringBuilder().AppendFormat("SelectionId={0}", this.SelectionId)
+                                        .AppendFormat(" : Handicap={0}", this.Handicap)
+                                        .AppendFormat(" : Status={0}", this.Status)
+                                        .AppendFormat(" : AdjustmentFactor={0}", this.AdjustmentFactor)
+                                        .AppendFormat(" : LastPriceTraded={0}", this.LastPriceTraded)
+                                        .AppendFormat(" : TotalMatched={0}", this.TotalMatched)
+                                        .AppendFormat(" : RemovalDate={0}", this.RemovalDate);
 
-            if (StartingPrices != null)
+            if (this.StartingPrices != null)
             {
-                sb.AppendFormat(": {0}", StartingPrices);
+                sb.AppendFormat(": {0}", this.StartingPrices);
             }
 
-            if (ExchangePrices != null)
+            if (this.ExchangePrices != null)
             {
-                sb.AppendFormat(": {0}", ExchangePrices);
-
+                sb.AppendFormat(": {0}", this.ExchangePrices);
             }
 
-            if (Orders != null && Orders.Count > 0)
+            if (this.Orders != null && this.Orders.Count > 0)
             {
-                int idx = 0;
-                foreach (var order in Orders)
+                var idx = 0;
+                foreach (var order in this.Orders)
                 {
                     sb.AppendFormat(" : Order[{0}]={1}", idx++, order);
                 }
             }
 
-            if (Matches != null && Matches.Count > 0)
+            if (this.Matches != null && this.Matches.Count > 0)
             {
-                int idx = 0;
-                foreach (var match in Matches)
+                var idx = 0;
+                foreach (var match in this.Matches)
                 {
                     sb.AppendFormat(" : Match[{0}]={1}", idx++, match);
                 }

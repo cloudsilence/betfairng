@@ -1,7 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Newtonsoft.Json;
 
 namespace BetfairNG.Data
@@ -13,7 +10,7 @@ namespace BetfairNG.Data
 
         [JsonProperty(PropertyName = "exBestOffersOverrides")]
         public ExBestOffersOverrides ExBestOffersOverrides { get; set; }
-        
+
         [JsonProperty(PropertyName = "virtualise")]
         public bool? Virtualise { get; set; }
 

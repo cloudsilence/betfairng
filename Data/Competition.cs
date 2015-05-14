@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 
@@ -17,9 +14,9 @@ namespace BetfairNG.Data
         public override string ToString()
         {
             return new StringBuilder().AppendFormat("{0}", "Competition")
-                        .AppendFormat(" : Id={0}", Id)
-                        .AppendFormat(" : Name={0}", Name)
-                        .ToString();
+                                      .AppendFormat(" : Id={0}", this.Id)
+                                      .AppendFormat(" : Name={0}", this.Name)
+                                      .ToString();
         }
     }
 }

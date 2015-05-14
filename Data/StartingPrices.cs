@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 
@@ -26,23 +24,23 @@ namespace BetfairNG.Data
         public override string ToString()
         {
             var sb = new StringBuilder().AppendFormat("{0}", "StartingPrices")
-                        .AppendFormat(" : NearPrice={0}", NearPrice)
-                        .AppendFormat(" : FarPrice={0}", FarPrice)
-                        .AppendFormat(" : ActualSP={0}", ActualSP);
+                                        .AppendFormat(" : NearPrice={0}", this.NearPrice)
+                                        .AppendFormat(" : FarPrice={0}", this.FarPrice)
+                                        .AppendFormat(" : ActualSP={0}", this.ActualSP);
 
-            if (BackStakeTaken != null && BackStakeTaken.Count > 0)
+            if (this.BackStakeTaken != null && this.BackStakeTaken.Count > 0)
             {
-                int idx = 0;
-                foreach (var backStake in BackStakeTaken)
+                var idx = 0;
+                foreach (var backStake in this.BackStakeTaken)
                 {
                     sb.AppendFormat(" : BackStake[{0}]={1}", idx++, backStake);
                 }
             }
 
-            if (LayLiabilityTaken != null && LayLiabilityTaken.Count > 0)
+            if (this.LayLiabilityTaken != null && this.LayLiabilityTaken.Count > 0)
             {
-                int idx = 0;
-                foreach (var layLiability in LayLiabilityTaken)
+                var idx = 0;
+                foreach (var layLiability in this.LayLiabilityTaken)
                 {
                     sb.AppendFormat(" : LayLiability{0}]={1}", idx++, layLiability);
                 }

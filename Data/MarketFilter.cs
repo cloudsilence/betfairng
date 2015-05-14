@@ -1,7 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using Newtonsoft.Json;
 
 namespace BetfairNG.Data
@@ -52,8 +49,5 @@ namespace BetfairNG.Data
 
         [JsonProperty(PropertyName = "withOrders")]
         public ISet<OrderStatus> WithOrders { get; set; }
-
-
-         
     }
 }

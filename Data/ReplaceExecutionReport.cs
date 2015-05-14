@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Text;
 using Newtonsoft.Json;
 
@@ -26,16 +24,16 @@ namespace BetfairNG.Data
         public override string ToString()
         {
             var sb = new StringBuilder()
-                        .AppendFormat("{0}", "ReplaceExecutionReport")
-                        .AppendFormat(" : Status={0}", Status)
-                        .AppendFormat(" : ErrorCode={0}", ErrorCode)
-                        .AppendFormat(" : MarketId={0}", MarketId)
-                        .AppendFormat(" : CustomerRef={0}", CustomerRef);
+                .AppendFormat("{0}", "ReplaceExecutionReport")
+                .AppendFormat(" : Status={0}", this.Status)
+                .AppendFormat(" : ErrorCode={0}", this.ErrorCode)
+                .AppendFormat(" : MarketId={0}", this.MarketId)
+                .AppendFormat(" : CustomerRef={0}", this.CustomerRef);
 
-            if (InstructionReports != null && InstructionReports.Count > 0)
+            if (this.InstructionReports != null && this.InstructionReports.Count > 0)
             {
-                int idx = 0;
-                foreach (var instructionReport in InstructionReports)
+                var idx = 0;
+                foreach (var instructionReport in this.InstructionReports)
                 {
                     sb.AppendFormat(" : InstructionReport[{0}]={{{1}}}", idx++, instructionReport);
                 }

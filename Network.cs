@@ -3,37 +3,27 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
-using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
+using Exception = BetfairNG.Data.Exceptions.Exception;
 
 namespace BetfairNG
 {
     public class Network
     {
-        public string UserAgent { get; set; }
-        public string Host { get; set; }
-        public string AppKey { get; set; }
-        public string SessionToken { get; set; }
-
-        public int TimeoutMilliseconds { get; set; }
-        public int RetryCount { get; set; }
-        public bool GZipCompress { get; set; }
-        public Action PreRequestAction { get; set; }
-        public WebProxy Proxy { get; set; }
-
         private static object lockObj = new object();
         public static TraceSource TraceSource = new TraceSource("BetfairNG.Network");
 
         public Network() : this(null, null)
-        { }
+        {
+        }
 
         public Network(
-            string appKey, 
-            string sessionToken, 
-            Action preRequestAction = null, 
+            string appKey,
+            string sessionToken,
+            Action preRequestAction = null,
             bool gzipCompress = true,
             WebProxy proxy = null)
         {
@@ -47,9 +37,20 @@ namespace BetfairNG
             this.Proxy = proxy;
         }
 
+        public string UserAgent { get; set; }
+        public string Host { get; set; }
+        public string AppKey { get; set; }
+        public string SessionToken { get; set; }
+
+        public int TimeoutMilliseconds { get; set; }
+        public int RetryCount { get; set; }
+        public bool GZipCompress { get; set; }
+        public Action PreRequestAction { get; set; }
+        public WebProxy Proxy { get; set; }
+
         public BetfairServerResponse<KeepAliveResponse> KeepAliveSynchronous()
         {
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create("https://identitysso.betfair.com/api/keepAlive");
+            var request = (HttpWebRequest) WebRequest.Create("https://identitysso.betfair.com/api/keepAlive");
             request.UseDefaultCredentials = true;
             request.Method = "POST";
             request.ContentType = "application/x-www-form-urlencoded";
@@ -57,78 +58,93 @@ namespace BetfairNG
             request.Headers.Add("X-Authentication", this.SessionToken);
             request.Accept = "application/json";
             if (this.Proxy != null)
+            {
                 request.Proxy = this.Proxy;
+            }
 
             TraceSource.TraceInformation("KeepAlive");
-            DateTime requestStart = DateTime.Now;
-            Stopwatch watch = new Stopwatch();
+            var requestStart = DateTime.Now;
+            var watch = new Stopwatch();
             watch.Start();
 
-            using (Stream stream = ((HttpWebResponse)request.GetResponse()).GetResponseStream())
-            using (StreamReader reader = new StreamReader(stream, Encoding.Default))
+            using (var stream = request.GetResponse().GetResponseStream())
             {
-                var lastByte = DateTime.Now;
-                var response = JsonConvert.Deserialize<KeepAliveResponse>(reader.ReadToEnd());
-                watch.Stop();
-                TraceSource.TraceInformation("KeepAlive finish: {0}ms", watch.ElapsedMilliseconds);
-                BetfairServerResponse<KeepAliveResponse> r = new BetfairServerResponse<KeepAliveResponse>();
-                r.HasError = !string.IsNullOrWhiteSpace(response.Error);
-                r.Response = response;
-                r.LastByte = lastByte;
-                r.RequestStart = requestStart;
-                return r;
+                using (var reader = new StreamReader(stream, Encoding.Default))
+                {
+                    var lastByte = DateTime.Now;
+                    var response = JsonConvert.Deserialize<KeepAliveResponse>(reader.ReadToEnd());
+                    watch.Stop();
+                    TraceSource.TraceInformation("KeepAlive finish: {0}ms", watch.ElapsedMilliseconds);
+                    var r = new BetfairServerResponse<KeepAliveResponse>();
+                    r.HasError = !string.IsNullOrWhiteSpace(response.Error);
+                    r.Response = response;
+                    r.LastByte = lastByte;
+                    r.RequestStart = requestStart;
+                    return r;
+                }
             }
         }
 
         public Task<BetfairServerResponse<T>> Invoke<T>(
-            Exchange exchange, 
-            Endpoint endpoint, 
-            string method, 
+            Exchange exchange,
+            Endpoint endpoint,
+            string method,
             IDictionary<string, object> args = null)
         {
-            if (string.IsNullOrWhiteSpace(method)) throw new ArgumentNullException("method");
+            if (string.IsNullOrWhiteSpace(method))
+            {
+                throw new ArgumentNullException("method");
+            }
 
-            TraceSource.TraceInformation("Network: {0}, {1}", FormatEndpoint(endpoint), method);
-            DateTime requestStart = DateTime.Now;
-            Stopwatch watch = new Stopwatch();
+            TraceSource.TraceInformation("Network: {0}, {1}", this.FormatEndpoint(endpoint), method);
+            var requestStart = DateTime.Now;
+            var watch = new Stopwatch();
             watch.Start();
 
-            string url = string.Empty;
+            var url = string.Empty;
             if (exchange == Exchange.AUS)
+            {
                 url = "https://api-au.betfair.com/exchange";
+            }
             else
+            {
                 url = "https://api.betfair.com/exchange";
+            }
 
             if (endpoint == Endpoint.Betting)
+            {
                 url += "/betting/json-rpc/v1";
+            }
             else
+            {
                 url += "/account/json-rpc/v1";
+            }
 
             var call = new JsonRequest { Method = method, Id = 1, Params = args };
             var requestData = JsonConvert.Serialize(call);
 
-            var response = Request(url, requestData, "application/json-rpc", this.AppKey, this.SessionToken);
+            var response = this.Request(url, requestData, "application/json-rpc", this.AppKey, this.SessionToken);
 
             var result = response.ContinueWith(c =>
-                {
-                    var lastByte = DateTime.Now;
-                    var jsonResponse = JsonConvert.Deserialize<JsonResponse<T>>(c.Result);
+            {
+                var lastByte = DateTime.Now;
+                var jsonResponse = JsonConvert.Deserialize<JsonResponse<T>>(c.Result);
 
-                    watch.Stop();
-                    TraceSource.TraceInformation("Network finish: {0}ms, {1}, {2}",
-                        watch.ElapsedMilliseconds,
-                        FormatEndpoint(endpoint),
-                        method);
+                watch.Stop();
+                TraceSource.TraceInformation("Network finish: {0}ms, {1}, {2}",
+                    watch.ElapsedMilliseconds,
+                    this.FormatEndpoint(endpoint),
+                    method);
 
-                    return ToResponse(jsonResponse, requestStart, lastByte, watch.ElapsedMilliseconds);
-                });
+                return this.ToResponse(jsonResponse, requestStart, lastByte, watch.ElapsedMilliseconds);
+            });
 
             return result;
         }
 
         private BetfairServerResponse<T> ToResponse<T>(JsonResponse<T> response, DateTime requestStart, DateTime lastByteStamp, long latency)
         {
-            BetfairServerResponse<T> r = new BetfairServerResponse<T>();
+            var r = new BetfairServerResponse<T>();
             r.Error = BetfairServerException.ToClientException(response.Error);
             r.HasError = response.HasError;
             r.Response = response.Result;
@@ -138,60 +154,72 @@ namespace BetfairNG
         }
 
         private Task<string> Request(
-            string url, 
+            string url,
             string requestPostData,
             string contentType,
             string appKey,
             string sessionToken)
         {
             if (this.PreRequestAction != null)
-                PreRequestAction();
+            {
+                this.PreRequestAction();
+            }
 
-            var request = (HttpWebRequest)WebRequest.Create(url);
+            var request = (HttpWebRequest) WebRequest.Create(url);
 
             var postData = Encoding.UTF8.GetBytes(requestPostData);
             request.Method = "POST";
             request.ContentType = contentType;
-            if (!string.IsNullOrWhiteSpace(appKey)) 
+            if (!string.IsNullOrWhiteSpace(appKey))
+            {
                 request.Headers.Add("X-Application", appKey);
+            }
             if (!string.IsNullOrWhiteSpace(sessionToken))
+            {
                 request.Headers.Add("X-Authentication", sessionToken);
+            }
             request.Headers.Add(HttpRequestHeader.AcceptCharset, "ISO-8859-1,utf-8");
             request.AllowAutoRedirect = true;
             request.ContentLength = postData.Length;
             request.KeepAlive = true;
             if (this.Proxy != null)
+            {
                 request.Proxy = this.Proxy;
+            }
 
             if (this.GZipCompress)
+            {
                 request.Headers.Add(HttpRequestHeader.AcceptEncoding, "gzip, deflate");
+            }
             request.Headers.Add(HttpRequestHeader.AcceptLanguage, "en-US");
-            request.UserAgent = UserAgent;
+            request.UserAgent = this.UserAgent;
             request.Headers.Add(HttpRequestHeader.Pragma, "no-cache");
             request.Headers.Add(HttpRequestHeader.CacheControl, "no-cache");
 
-            Uri uri = new Uri(url);
+            var uri = new Uri(url);
             request.Host = uri.Host;
 
-            if (TimeoutMilliseconds != 0)
-                request.Timeout = TimeoutMilliseconds;
+            if (this.TimeoutMilliseconds != 0)
+            {
+                request.Timeout = this.TimeoutMilliseconds;
+            }
 
             var result = Task.Factory.FromAsync(
-                    request.BeginGetRequestStream,
-                    asyncResult => request.EndGetRequestStream(asyncResult),
-                    (object)null);
+                request.BeginGetRequestStream,
+                asyncResult => request.EndGetRequestStream(asyncResult),
+                null);
 
             var continuation = result
                 .ContinueWith(stream =>
-                    {
-                        stream.Result.Write(postData, 0, postData.Length);
-                        Task<WebResponse> task = Task.Factory.FromAsync(
+                {
+                    stream.Result.Write(postData, 0, postData.Length);
+                    var task = Task.Factory.FromAsync(
                         request.BeginGetResponse,
                         asyncResult => request.EndGetResponse(asyncResult),
-                        (object)null);
+                        null);
 
-                        return task.ContinueWith(t => GetResponseHtml((HttpWebResponse)t.Result));
-                    }).Unwrap();
+                    return task.ContinueWith(t => this.GetResponseHtml((HttpWebResponse) t.Result));
+                }).Unwrap();
 
             return continuation;
         }
@@ -204,24 +232,36 @@ namespace BetfairNG
             {
                 if (response.ContentEncoding.ToLower().Contains("gzip"))
                 {
-                    using (GZipStream gzipStream = new GZipStream(responseStream, CompressionMode.Decompress))
-                    using (StreamReader streamReader = new StreamReader(gzipStream, Encoding.Default))
-                        html = streamReader.ReadToEnd();
+                    using (var gzipStream = new GZipStream(responseStream, CompressionMode.Decompress))
+                    {
+                        using (var streamReader = new StreamReader(gzipStream, Encoding.Default))
+                        {
+                            html = streamReader.ReadToEnd();
+                        }
+                    }
                 }
                 else if (response.ContentEncoding.ToLower().Contains("deflate"))
                 {
-                    using (DeflateStream deflateStream = new DeflateStream(responseStream, CompressionMode.Decompress))
-                    using (StreamReader streamReader = new StreamReader(deflateStream, Encoding.Default))
-                        html = streamReader.ReadToEnd();
+                    using (var deflateStream = new DeflateStream(responseStream, CompressionMode.Decompress))
+                    {
+                        using (var streamReader = new StreamReader(deflateStream, Encoding.Default))
+                        {
+                            html = streamReader.ReadToEnd();
+                        }
+                    }
                 }
                 else
-                    using (StreamReader reader = new StreamReader(responseStream))
+                {
+                    using (var reader = new StreamReader(responseStream))
+                    {
                         html = reader.ReadToEnd();
+                    }
+                }
             }
 
             return html;
         }
-        
+
         private string FormatEndpoint(Endpoint endpoint)
         {
             return endpoint == Endpoint.Betting ? "betting" : "account";
@@ -232,7 +272,7 @@ namespace BetfairNG
         {
             public JsonRequest()
             {
-                JsonRpc = "2.0";
+                this.JsonRpc = "2.0";
             }
 
             [JsonProperty(PropertyName = "jsonrpc", NullValueHandling = NullValueHandling.Ignore)]
@@ -258,7 +298,7 @@ namespace BetfairNG
             public T Result { get; set; }
 
             [JsonProperty(PropertyName = "error", NullValueHandling = NullValueHandling.Ignore)]
-            public Data.Exceptions.Exception Error { get; set; }
+            public Exception Error { get; set; }
 
             [JsonProperty(PropertyName = "id")]
             public object Id { get; set; }
@@ -266,7 +306,7 @@ namespace BetfairNG
             [JsonIgnore]
             public bool HasError
             {
-                get { return Error != null; }
+                get { return this.Error != null; }
             }
         }
     }

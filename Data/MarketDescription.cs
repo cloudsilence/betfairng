@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 
@@ -56,26 +54,22 @@ namespace BetfairNG.Data
         public override string ToString()
         {
             return new StringBuilder().AppendFormat("{0}", "MarketDescription")
-                        .AppendFormat(" : BspMarket={0}", IsBspMarket)
-                        .AppendFormat(" : BettingType={0}", BettingType)
-                        .AppendFormat(" : MarketType={0}", MarketType)
-
-                        .AppendFormat(" : MarketTime={0}", MarketTime)
-                        .AppendFormat(" : SuspendTime={0}", SuspendTime)
-                        .AppendFormat(" : SettleTime={0}", SettleTime)
-                        .AppendFormat(" : MarketBaseRate={0}", MarketBaseRate)
-
-                        .AppendFormat(" : IsPersistenceEnabled={0}", IsPersistenceEnabled)
-                        .AppendFormat(" : IsTurnInPlayEnabled={0}", IsTurnInPlayEnabled)
-                        .AppendFormat(" : IsDiscountAllowed={0}", IsDiscountAllowed)
-
-                        .AppendFormat(" : Regulator={0}", Regulator)
-                        .AppendFormat(" : Rules={0}", Rules)
-                        .AppendFormat(" : RulesHasDate={0}", RulesHasDate)
-                        .AppendFormat(" : Clarifications={0}", Clarifications)
-
-                        .AppendFormat(" : Wallet={0}", Wallet)
-                        .ToString();
+                                      .AppendFormat(" : BspMarket={0}", this.IsBspMarket)
+                                      .AppendFormat(" : BettingType={0}", this.BettingType)
+                                      .AppendFormat(" : MarketType={0}", this.MarketType)
+                                      .AppendFormat(" : MarketTime={0}", this.MarketTime)
+                                      .AppendFormat(" : SuspendTime={0}", this.SuspendTime)
+                                      .AppendFormat(" : SettleTime={0}", this.SettleTime)
+                                      .AppendFormat(" : MarketBaseRate={0}", this.MarketBaseRate)
+                                      .AppendFormat(" : IsPersistenceEnabled={0}", this.IsPersistenceEnabled)
+                                      .AppendFormat(" : IsTurnInPlayEnabled={0}", this.IsTurnInPlayEnabled)
+                                      .AppendFormat(" : IsDiscountAllowed={0}", this.IsDiscountAllowed)
+                                      .AppendFormat(" : Regulator={0}", this.Regulator)
+                                      .AppendFormat(" : Rules={0}", this.Rules)
+                                      .AppendFormat(" : RulesHasDate={0}", this.RulesHasDate)
+                                      .AppendFormat(" : Clarifications={0}", this.Clarifications)
+                                      .AppendFormat(" : Wallet={0}", this.Wallet)
+                                      .ToString();
         }
     }
 }

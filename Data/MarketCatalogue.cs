@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 
@@ -36,18 +34,18 @@ namespace BetfairNG.Data
         {
             // well, don't bother displaying event/event type/competition
             var sb = new StringBuilder().AppendFormat("{0}", "MarketCatalogue")
-                        .AppendFormat(" : Market={0}[{1}]", MarketId, MarketName)
-                        .AppendFormat(" : IsMarketDataDelayed={0}", IsMarketDataDelayed);
+                                        .AppendFormat(" : Market={0}[{1}]", this.MarketId, this.MarketName)
+                                        .AppendFormat(" : IsMarketDataDelayed={0}", this.IsMarketDataDelayed);
 
-            if (Description != null)
+            if (this.Description != null)
             {
-                sb.AppendFormat(" : {0}", Description);
+                sb.AppendFormat(" : {0}", this.Description);
             }
 
-            if (Runners != null && Runners.Count > 0)
+            if (this.Runners != null && this.Runners.Count > 0)
             {
-                int idx = 0;
-                foreach (var runner in Runners)
+                var idx = 0;
+                foreach (var runner in this.Runners)
                 {
                     sb.AppendFormat(" : Runner[{0}]={1}", idx++, runner);
                 }
