@@ -123,7 +123,7 @@ namespace BetfairNG
 
             if (string.IsNullOrWhiteSpace(p12CertificatePassword))
             {
-                throw new ArgumentException("p12CertificatePassword");
+                //throw new ArgumentException("p12CertificatePassword");
             }
 
             if (string.IsNullOrWhiteSpace(username))
@@ -147,13 +147,13 @@ namespace BetfairNG
             }
 
             var postData = string.Format("username={0}&password={1}", username, password);
-            var x509certificate = new X509Certificate2(p12CertificateLocation, p12CertificatePassword);
             var request = (HttpWebRequest) WebRequest.Create("https://identitysso-api.betfair.com/api/certlogin");
+            var x509Certificate = new X509Certificate2(p12CertificateLocation, p12CertificatePassword, X509KeyStorageFlags.PersistKeySet);
+            request.ClientCertificates.Add(x509Certificate);
             request.UseDefaultCredentials = true;
             request.Method = "POST";
             request.ContentType = "application/x-www-form-urlencoded";
             request.Headers.Add("X-Application", this.appKey);
-            request.ClientCertificates.Add(x509certificate);
             request.Accept = "*/*";
             if (this.proxy != null)
             {
@@ -170,16 +170,23 @@ namespace BetfairNG
 
             using (var stream = request.GetResponse().GetResponseStream())
             {
+                if (stream == null)
+                {
+                    return false;
+                }
+
                 using (var reader = new StreamReader(stream, Encoding.Default))
                 {
                     var jsonResponse = JsonConvert.Deserialize<LoginResponse>(reader.ReadToEnd());
-                    if (jsonResponse.LoginStatus == "SUCCESS")
-                    {
-                        this.sessionToken = jsonResponse.SessionToken;
-                        this.networkClient = new Network(this.appKey, this.sessionToken, this.preNetworkRequest);
 
-                        return true;
+                    switch (jsonResponse.LoginStatus)
+                    {
+                        case "SUCCESS":
+                            this.sessionToken = jsonResponse.SessionToken;
+                            this.networkClient = new Network(this.appKey, this.sessionToken, this.preNetworkRequest);
+                            return true;
                     }
+
                     return false;
                 }
             }

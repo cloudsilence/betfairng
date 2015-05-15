@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Threading;
@@ -11,15 +12,15 @@ using BetfairNG.Data;
 // and displays them to the console.
 namespace ConsoleExample
 {
-    public class Program
+    public static class Program
     {
         private static readonly ConcurrentQueue<MarketCatalogue> Markets = new ConcurrentQueue<MarketCatalogue>();
 
         public static void Main()
         {
-            // TODO:// replace with your app details and Betfair username/password
-            var client = new BetfairClient(Exchange.UK, "APPKEY");
-            client.Login(@"client-2048.p12", "certpass", "username", "password");
+            var settings = new Settings();
+            var client = new BetfairClient(Exchange.UK, settings.AppKey);
+            client.Login(settings.CertificateLocation, settings.CertificatePassword, settings.Username, settings.Password);
 
             // find all the upcoming UK horse races (EventTypeId 7)
             var marketFilter = new MarketFilter
@@ -36,6 +37,13 @@ namespace ConsoleExample
             Console.WriteLine("BetfairClient.ListTimeRanges()");
             var timeRanges = client.ListTimeRanges(marketFilter, TimeGranularity.HOURS).Result;
             if (timeRanges.HasError)
+            {
+                throw new ApplicationException();
+            } 
+            
+            Console.WriteLine("BetfairClient.ListEventTypes()");
+            var eventTypes = client.ListEventTypes(new MarketFilter()).Result;
+            if (eventTypes.HasError)
             {
                 throw new ApplicationException();
             }
@@ -97,27 +105,27 @@ namespace ConsoleExample
 
             Console.WriteLine();
 
-            var marketListener = MarketListener.Create(client, BFHelpers.HorseRacePriceProjection(), 1);
+            //var marketListener = MarketListener.Create(client, BFHelpers.HorseRacePriceProjection(), 1);
 
-            while (Markets.Count > 0)
-            {
-                var waitHandle = new AutoResetEvent(false);
-                MarketCatalogue marketCatalogue;
-                Markets.TryDequeue(out marketCatalogue);
+            //while (Markets.Count > 0)
+            //{
+            //    var waitHandle = new AutoResetEvent(false);
+            //    MarketCatalogue marketCatalogue;
+            //    Markets.TryDequeue(out marketCatalogue);
 
-                var marketSubscription = marketListener.SubscribeMarketBook(marketCatalogue.MarketId)
-                                                       .SubscribeOn(Scheduler.Default)
-                                                       .Subscribe(
-                                                           tick => { Console.WriteLine(BFHelpers.MarketBookConsole(marketCatalogue, tick, marketCatalogue.Runners)); },
-                                                           () =>
-                                                           {
-                                                               Console.WriteLine("Market finished");
-                                                               waitHandle.Set();
-                                                           });
+            //    var marketSubscription = marketListener.SubscribeMarketBook(marketCatalogue.MarketId)
+            //                                           .SubscribeOn(Scheduler.Default)
+            //                                           .Subscribe(
+            //                                               tick => Console.WriteLine(BFHelpers.MarketBookConsole(marketCatalogue, tick, marketCatalogue.Runners)),
+            //                                               () =>
+            //                                               {
+            //                                                   Console.WriteLine("Market finished");
+            //                                                   waitHandle.Set();
+            //                                               });
 
-                waitHandle.WaitOne();
-                marketSubscription.Dispose();
-            }
+            //    waitHandle.WaitOne();
+            //    marketSubscription.Dispose();
+            //}
 
             Console.WriteLine("done.");
             Console.ReadLine();
