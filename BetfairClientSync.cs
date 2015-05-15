@@ -1,55 +1,52 @@
-﻿using BetfairNG.Data;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Text;
-using System.Threading.Tasks;
+using BetfairNG.Data;
 
 namespace BetfairNG
 {
     /// <summary>
-    /// Synchronous version of the Betfair client. 
+    ///     Synchronous version of the Betfair client.
     /// </summary>
     public class BetfairClientSync
     {
-        private BetfairClient client;
+        private readonly BetfairClient client;
 
-        public BetfairClientSync(Exchange exchange, 
-            string appKey, 
-            string sessionToken, 
-            Action preNetworkRequest = null,
-            WebProxy proxy = null)
-        { 
-            client = new BetfairClient(exchange, appKey, sessionToken, preNetworkRequest, proxy);
+        public BetfairClientSync(Exchange exchange,
+                                 string appKey,
+                                 string sessionToken,
+                                 Action preNetworkRequest = null,
+                                 WebProxy proxy = null)
+        {
+            this.client = new BetfairClient(exchange, appKey, sessionToken, preNetworkRequest, proxy);
         }
 
         public BetfairClientSync(Exchange exchange,
-            string appKey,
-            Action preNetworkRequest = null,
-            WebProxy proxy = null)
+                                 string appKey,
+                                 Action preNetworkRequest = null,
+                                 WebProxy proxy = null)
         {
-            client = new BetfairClient(exchange, appKey, preNetworkRequest, proxy);
+            this.client = new BetfairClient(exchange, appKey, preNetworkRequest, proxy);
         }
 
         public bool Login(string p12CertificateLocation, string p12CertificatePassword, string username, string password)
         {
-            return client.Login(p12CertificateLocation, p12CertificatePassword, username, password);
+            return this.client.Login(p12CertificateLocation, p12CertificatePassword, username, password);
         }
 
         public BetfairServerResponse<KeepAliveResponse> KeepAlive()
         {
-            return client.KeepAlive();
+            return this.client.KeepAlive();
         }
 
         public BetfairServerResponse<List<CompetitionResult>> ListCompetitions(MarketFilter marketFilter)
         {
-            return client.ListCompetitions(marketFilter).Result;
+            return this.client.ListCompetitions(marketFilter).Result;
         }
 
         public BetfairServerResponse<List<CountryCodeResult>> ListCountries(MarketFilter marketFilter)
         {
-            return client.ListCountries(marketFilter).Result;
+            return this.client.ListCountries(marketFilter).Result;
         }
 
         public BetfairServerResponse<CurrentOrderSummaryReport> ListCurrentOrders(
@@ -63,7 +60,7 @@ namespace BetfairNG
             int? fromRecord = null,
             int? recordCount = null)
         {
-            return client.ListCurrentOrders(
+            return this.client.ListCurrentOrders(
                 betIds,
                 marketIds,
                 orderProjection,
@@ -89,7 +86,7 @@ namespace BetfairNG
             int? fromRecord = null,
             int? recordCount = null)
         {
-            return client.ListClearedOrders(
+            return this.client.ListClearedOrders(
                 betStatus,
                 eventTypeIds,
                 eventIds,
@@ -106,12 +103,12 @@ namespace BetfairNG
 
         public BetfairServerResponse<List<EventResult>> ListEvents(MarketFilter marketFilter)
         {
-            return client.ListEvents(marketFilter).Result;
+            return this.client.ListEvents(marketFilter).Result;
         }
 
         public BetfairServerResponse<List<EventTypeResult>> ListEventTypes(MarketFilter marketFilter)
         {
-            return client.ListEventTypes(marketFilter).Result;
+            return this.client.ListEventTypes(marketFilter).Result;
         }
 
         public BetfairServerResponse<List<MarketBook>> ListMarketBook(
@@ -120,7 +117,7 @@ namespace BetfairNG
             OrderProjection? orderProjection = null,
             MatchProjection? matchProjection = null)
         {
-            return client.ListMarketBook(
+            return this.client.ListMarketBook(
                 marketIds,
                 priceProjection,
                 orderProjection,
@@ -133,7 +130,7 @@ namespace BetfairNG
             MarketSort? sort = null,
             int maxResult = 1)
         {
-            return client.ListMarketCatalogue(
+            return this.client.ListMarketCatalogue(
                 marketFilter,
                 marketProjections,
                 sort,
@@ -146,7 +143,7 @@ namespace BetfairNG
             bool includeBsbBets,
             bool netOfCommission)
         {
-            return client.ListMarketProfitAndLoss(
+            return this.client.ListMarketProfitAndLoss(
                 marketIds,
                 includeSettledBets,
                 includeBsbBets,
@@ -155,59 +152,59 @@ namespace BetfairNG
 
         public BetfairServerResponse<List<MarketTypeResult>> ListMarketTypes(MarketFilter marketFilter)
         {
-            return client.ListMarketTypes(marketFilter).Result;
+            return this.client.ListMarketTypes(marketFilter).Result;
         }
 
         public BetfairServerResponse<List<TimeRangeResult>> ListTimeRanges(MarketFilter marketFilter, TimeGranularity timeGranularity)
         {
-            return client.ListTimeRanges(marketFilter, timeGranularity).Result;
+            return this.client.ListTimeRanges(marketFilter, timeGranularity).Result;
         }
 
         public BetfairServerResponse<List<VenueResult>> ListVenues(MarketFilter marketFilter)
         {
-            return client.ListVenues(marketFilter).Result;
+            return this.client.ListVenues(marketFilter).Result;
         }
 
-         public BetfairServerResponse<PlaceExecutionReport> PlaceOrders(
-            string marketId, 
+        public BetfairServerResponse<PlaceExecutionReport> PlaceOrders(
+            string marketId,
             IList<PlaceInstruction> placeInstructions,
             string customerRef = null)
         {
-            return client.PlaceOrders(marketId, placeInstructions, customerRef).Result;
+            return this.client.PlaceOrders(marketId, placeInstructions, customerRef).Result;
         }
 
         public BetfairServerResponse<CancelExecutionReport> CancelOrders(
             string marketId = null,
             IList<CancelInstruction> instructions = null,
             string customerRef = null)
-         {
-             return client.CancelOrders(marketId, instructions, customerRef).Result;
-         }
+        {
+            return this.client.CancelOrders(marketId, instructions, customerRef).Result;
+        }
 
         public BetfairServerResponse<ReplaceExecutionReport> ReplaceOrders(
             string marketId,
             IList<ReplaceInstruction> instructions,
             string customerRef = null)
         {
-            return client.ReplaceOrders(marketId, instructions, customerRef).Result;
+            return this.client.ReplaceOrders(marketId, instructions, customerRef).Result;
         }
 
         public BetfairServerResponse<UpdateExecutionReport> UpdateOrders(
-           string marketId,
-           IList<UpdateInstruction> instructions,
-           string customerRef = null)
+            string marketId,
+            IList<UpdateInstruction> instructions,
+            string customerRef = null)
         {
-            return client.UpdateOrders(marketId, instructions, customerRef).Result;
+            return this.client.UpdateOrders(marketId, instructions, customerRef).Result;
         }
 
         public BetfairServerResponse<AccountDetailsResponse> GetAccountDetails()
         {
-            return client.GetAccountDetails().Result;
+            return this.client.GetAccountDetails().Result;
         }
 
         public BetfairServerResponse<AccountFundsResponse> GetAccountFunds(Wallet wallet)
         {
-            return client.GetAccountFunds(wallet).Result;
+            return this.client.GetAccountFunds(wallet).Result;
         }
 
         public BetfairServerResponse<AccountStatementReport> GetAccountStatement(
@@ -217,7 +214,7 @@ namespace BetfairNG
             IncludeItem? includeItem = null,
             Wallet? wallet = null)
         {
-            return client.GetAccountStatement(
+            return this.client.GetAccountStatement(
                 fromRecord,
                 recordCount,
                 itemDateRange,
@@ -227,12 +224,12 @@ namespace BetfairNG
 
         public BetfairServerResponse<List<CurrencyRate>> ListCurrencyRates(string fromCurrency)
         {
-            return client.ListCurrencyRates(fromCurrency).Result;
+            return this.client.ListCurrencyRates(fromCurrency).Result;
         }
 
         public BetfairServerResponse<TransferResponse> TransferFunds(Wallet from, Wallet to, double amount)
         {
-            return client.TransferFunds(from, to, amount).Result;
+            return this.client.TransferFunds(from, to, amount).Result;
         }
     }
 }

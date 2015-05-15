@@ -1,29 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics;
+using System.IO;
+using System.Net;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using BetfairNG.Data;
-using Newtonsoft.Json;
-using System.Security.Cryptography.X509Certificates;
-using System.Net;
-using System.IO;
-using System.Diagnostics;
-using Newtonsoft.Json.Linq;
 
 namespace BetfairNG
 {
     /// <summary>
-    /// Task Parallel Library version of BetfairClient API. 
+    ///     Task Parallel Library version of BetfairClient API.
     /// </summary>
     public class BetfairClient
     {
-        private Exchange exchange;
-        private Network networkClient;
-        private string appKey;
-        private string sessionToken;
-        private Action preNetworkRequest;
-        private WebProxy proxy;
         private static TraceSource trace = new TraceSource("BetfairClient");
 
         private static readonly string LIST_COMPETITIONS_METHOD = "SportsAPING/v1.0/listCompetitions";
@@ -84,9 +75,19 @@ namespace BetfairNG
         private static readonly string AMOUNT = "amount";
         private static readonly string WALLET = "wallet";
 
+        private readonly string appKey;
+        private readonly Exchange exchange;
+        private readonly Action preNetworkRequest;
+        private readonly WebProxy proxy;
+        private Network networkClient;
+        private string sessionToken;
+
         public BetfairClient(Exchange exchange, string appKey, Action preNetworkRequest = null, WebProxy proxy = null)
         {
-            if (string.IsNullOrWhiteSpace(appKey)) throw new ArgumentException("appKey");
+            if (string.IsNullOrWhiteSpace(appKey))
+            {
+                throw new ArgumentException("appKey");
+            }
 
             this.exchange = exchange;
             this.appKey = appKey;
@@ -94,15 +95,16 @@ namespace BetfairNG
             this.proxy = proxy;
         }
 
-        public BetfairClient(
-            Exchange exchange, 
-            string appKey, 
-            string sessionToken, 
-            Action preNetworkRequest = null,
-            WebProxy proxy = null)
+        public BetfairClient(Exchange exchange, string appKey, string sessionToken, Action preNetworkRequest = null, WebProxy proxy = null)
         {
-            if (string.IsNullOrWhiteSpace(appKey)) throw new ArgumentException("appKey");
-            if (string.IsNullOrWhiteSpace(sessionToken)) throw new ArgumentException("sessionToken");
+            if (string.IsNullOrWhiteSpace(appKey))
+            {
+                throw new ArgumentException("appKey");
+            }
+            if (string.IsNullOrWhiteSpace(sessionToken))
+            {
+                throw new ArgumentException("sessionToken");
+            }
 
             this.exchange = exchange;
             this.appKey = appKey;
@@ -111,81 +113,105 @@ namespace BetfairNG
             this.proxy = proxy;
             this.networkClient = new Network(this.appKey, this.sessionToken, this.preNetworkRequest, true, this.proxy);
         }
-        
+
         public bool Login(string p12CertificateLocation, string p12CertificatePassword, string username, string password)
         {
-            if (string.IsNullOrWhiteSpace(p12CertificateLocation)) throw new ArgumentException("p12CertificateLocation");
-            if (string.IsNullOrWhiteSpace(p12CertificatePassword)) throw new ArgumentException("p12CertificatePassword");
-            if (string.IsNullOrWhiteSpace(username)) throw new ArgumentException("username");
-            if (string.IsNullOrWhiteSpace(password)) throw new ArgumentException("password");
-            if (!File.Exists(p12CertificateLocation)) throw new ArgumentException("p12CertificateLocation not found");
+            if (string.IsNullOrWhiteSpace(p12CertificateLocation))
+            {
+                throw new ArgumentException("p12CertificateLocation");
+            }
 
-            if (preNetworkRequest != null)
-                preNetworkRequest();
+            if (string.IsNullOrWhiteSpace(p12CertificatePassword))
+            {
+                //throw new ArgumentException("p12CertificatePassword");
+            }
 
-            string postData = string.Format("username={0}&password={1}", username, password);
-            X509Certificate2 x509certificate = new X509Certificate2(p12CertificateLocation, p12CertificatePassword);
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create("https://identitysso-api.betfair.com/api/certlogin");
+            if (string.IsNullOrWhiteSpace(username))
+            {
+                throw new ArgumentException("username");
+            }
+
+            if (string.IsNullOrWhiteSpace(password))
+            {
+                throw new ArgumentException("password");
+            }
+
+            if (!File.Exists(p12CertificateLocation))
+            {
+                throw new ArgumentException("p12CertificateLocation not found");
+            }
+
+            if (this.preNetworkRequest != null)
+            {
+                this.preNetworkRequest();
+            }
+
+            var postData = string.Format("username={0}&password={1}", username, password);
+            var request = (HttpWebRequest) WebRequest.Create("https://identitysso-api.betfair.com/api/certlogin");
+            var x509Certificate = new X509Certificate2(p12CertificateLocation, p12CertificatePassword, X509KeyStorageFlags.PersistKeySet);
+            request.ClientCertificates.Add(x509Certificate);
             request.UseDefaultCredentials = true;
             request.Method = "POST";
             request.ContentType = "application/x-www-form-urlencoded";
-            request.Headers.Add("X-Application", appKey);
-            request.ClientCertificates.Add(x509certificate);
+            request.Headers.Add("X-Application", this.appKey);
             request.Accept = "*/*";
             if (this.proxy != null)
-                request.Proxy = this.proxy;
-
-            using (Stream stream = request.GetRequestStream())
-            using (StreamWriter writer = new StreamWriter(stream, Encoding.Default))
             {
-                writer.Write(postData);
+                request.Proxy = this.proxy;
             }
 
-            using (Stream stream = ((HttpWebResponse)request.GetResponse()).GetResponseStream())
-            using (StreamReader reader = new StreamReader(stream, Encoding.Default))
+            using (var stream = request.GetRequestStream())
             {
-                var jsonResponse = JsonConvert.Deserialize<LoginResponse>(reader.ReadToEnd());
-                if (jsonResponse.LoginStatus == "SUCCESS")
+                using (var writer = new StreamWriter(stream, Encoding.Default))
                 {
-                    this.sessionToken = jsonResponse.SessionToken;
-                    this.networkClient = new Network(appKey, this.sessionToken, this.preNetworkRequest);
-
-                    return true;
+                    writer.Write(postData);
                 }
-                else
+            }
+
+            using (var stream = request.GetResponse().GetResponseStream())
+            {
+                if (stream == null)
+                {
                     return false;
+                }
+
+                using (var reader = new StreamReader(stream, Encoding.Default))
+                {
+                    var jsonResponse = JsonConvert.Deserialize<LoginResponse>(reader.ReadToEnd());
+
+                    switch (jsonResponse.LoginStatus)
+                    {
+                        case "SUCCESS":
+                            this.sessionToken = jsonResponse.SessionToken;
+                            this.networkClient = new Network(this.appKey, this.sessionToken, this.preNetworkRequest);
+                            return true;
+                    }
+
+                    return false;
+                }
             }
         }
 
         public BetfairServerResponse<KeepAliveResponse> KeepAlive()
         {
-            return networkClient.KeepAliveSynchronous();
+            return this.networkClient.KeepAliveSynchronous();
         }
 
         public Task<BetfairServerResponse<List<CompetitionResult>>> ListCompetitions(MarketFilter marketFilter)
         {
             var args = new Dictionary<string, object>();
             args[FILTER] = marketFilter;
-            return networkClient.Invoke<List<CompetitionResult>>(exchange, Endpoint.Betting, LIST_COUNTRIES_METHOD, args);
+            return this.networkClient.Invoke<List<CompetitionResult>>(this.exchange, Endpoint.Betting, LIST_COUNTRIES_METHOD, args);
         }
 
         public Task<BetfairServerResponse<List<CountryCodeResult>>> ListCountries(MarketFilter marketFilter)
         {
             var args = new Dictionary<string, object>();
             args[FILTER] = marketFilter;
-            return networkClient.Invoke<List<CountryCodeResult>>(exchange, Endpoint.Betting, LIST_COMPETITIONS_METHOD, args);
+            return this.networkClient.Invoke<List<CountryCodeResult>>(this.exchange, Endpoint.Betting, LIST_COMPETITIONS_METHOD, args);
         }
 
-        public Task<BetfairServerResponse<CurrentOrderSummaryReport>> ListCurrentOrders(
-            ISet<string> betIds = null,
-            ISet<string> marketIds = null,
-            OrderProjection? orderProjection = null,
-            TimeRange placedDateRange = null,
-            TimeRange dateRange = null,
-            OrderBy? orderBy = null,
-            SortDir? sortDir = null,
-            int? fromRecord = null,
-            int? recordCount = null)
+        public Task<BetfairServerResponse<CurrentOrderSummaryReport>> ListCurrentOrders(ISet<string> betIds = null, ISet<string> marketIds = null, OrderProjection? orderProjection = null, TimeRange placedDateRange = null, TimeRange dateRange = null, OrderBy? orderBy = null, SortDir? sortDir = null, int? fromRecord = null, int? recordCount = null)
         {
             var args = new Dictionary<string, object>();
             args[BET_IDS] = betIds;
@@ -197,22 +223,10 @@ namespace BetfairNG
             args[SORT_DIR] = sortDir;
             args[FROM_RECORD] = fromRecord;
             args[RECORD_COUNT] = recordCount;
-            return networkClient.Invoke<CurrentOrderSummaryReport>(exchange, Endpoint.Betting, LIST_CURRENT_ORDERS_METHOD, args);
+            return this.networkClient.Invoke<CurrentOrderSummaryReport>(this.exchange, Endpoint.Betting, LIST_CURRENT_ORDERS_METHOD, args);
         }
 
-        public Task<BetfairServerResponse<ClearedOrderSummaryReport>> ListClearedOrders(
-            BetStatus betStatus,
-            ISet<string> eventTypeIds = null,
-            ISet<string> eventIds = null,
-            ISet<string> marketIds = null,
-            ISet<RunnerId> runnerIds = null,
-            ISet<string> betIds = null,
-            Side? side = null,
-            TimeRange settledDateRange = null,
-            GroupBy? groupBy = null,
-            bool? includeItemDescription = null,
-            int? fromRecord = null,
-            int? recordCount = null)
+        public Task<BetfairServerResponse<ClearedOrderSummaryReport>> ListClearedOrders(BetStatus betStatus, ISet<string> eventTypeIds = null, ISet<string> eventIds = null, ISet<string> marketIds = null, ISet<RunnerId> runnerIds = null, ISet<string> betIds = null, Side? side = null, TimeRange settledDateRange = null, GroupBy? groupBy = null, bool? includeItemDescription = null, int? fromRecord = null, int? recordCount = null)
         {
             var args = new Dictionary<string, object>();
             args[BET_STATUS] = betStatus;
@@ -228,70 +242,58 @@ namespace BetfairNG
             args[FROM_RECORD] = fromRecord;
             args[RECORD_COUNT] = recordCount;
 
-            return networkClient.Invoke<ClearedOrderSummaryReport>(exchange, Endpoint.Betting, LIST_CLEARED_ORDERS_METHOD, args);
+            return this.networkClient.Invoke<ClearedOrderSummaryReport>(this.exchange, Endpoint.Betting, LIST_CLEARED_ORDERS_METHOD, args);
         }
 
         public Task<BetfairServerResponse<List<EventResult>>> ListEvents(MarketFilter marketFilter)
         {
             var args = new Dictionary<string, object>();
             args[FILTER] = marketFilter;
-            return networkClient.Invoke<List<EventResult>>(exchange, Endpoint.Betting, LIST_EVENT_TYPES_METHOD, args);
+            return this.networkClient.Invoke<List<EventResult>>(this.exchange, Endpoint.Betting, LIST_EVENT_TYPES_METHOD, args);
         }
 
         public Task<BetfairServerResponse<List<EventTypeResult>>> ListEventTypes(MarketFilter marketFilter)
         {
             var args = new Dictionary<string, object>();
             args[FILTER] = marketFilter;
-            return networkClient.Invoke<List<EventTypeResult>>(exchange, Endpoint.Betting, LIST_EVENT_TYPES_METHOD, args);
+            return this.networkClient.Invoke<List<EventTypeResult>>(this.exchange, Endpoint.Betting, LIST_EVENT_TYPES_METHOD, args);
         }
 
-        public Task<BetfairServerResponse<List<MarketBook>>> ListMarketBook(
-            IEnumerable<string> marketIds,
-            PriceProjection priceProjection = null,
-            OrderProjection? orderProjection = null,
-            MatchProjection? matchProjection = null)
+        public Task<BetfairServerResponse<List<MarketBook>>> ListMarketBook(IEnumerable<string> marketIds, PriceProjection priceProjection = null, OrderProjection? orderProjection = null, MatchProjection? matchProjection = null)
         {
             var args = new Dictionary<string, object>();
             args[MARKET_IDS] = marketIds;
             args[PRICE_PROJECTION] = priceProjection;
             args[ORDER_PROJECTION] = orderProjection;
             args[MATCH_PROJECTION] = matchProjection;
-            return networkClient.Invoke<List<MarketBook>>(exchange, Endpoint.Betting, LIST_MARKET_BOOK_METHOD, args);
+            return this.networkClient.Invoke<List<MarketBook>>(this.exchange, Endpoint.Betting, LIST_MARKET_BOOK_METHOD, args);
         }
 
-        public Task<BetfairServerResponse<List<MarketCatalogue>>> ListMarketCatalogue(
-            MarketFilter marketFilter, 
-            ISet<MarketProjection> marketProjections = null, 
-            MarketSort? sort = null, 
-            int maxResult = 1)
+        public Task<BetfairServerResponse<List<MarketCatalogue>>> ListMarketCatalogue(MarketFilter marketFilter, ISet<MarketProjection> marketProjections = null, MarketSort? sort = null, int maxResult = 1)
         {
             var args = new Dictionary<string, object>();
             args[FILTER] = marketFilter;
             args[MARKET_PROJECTION] = marketProjections;
             args[SORT] = sort;
             args[MAX_RESULTS] = maxResult;
-            return networkClient.Invoke<List<MarketCatalogue>>(exchange, Endpoint.Betting, LIST_MARKET_CATALOGUE_METHOD, args);
+            return this.networkClient.Invoke<List<MarketCatalogue>>(this.exchange, Endpoint.Betting, LIST_MARKET_CATALOGUE_METHOD, args);
         }
 
-        public Task<BetfairServerResponse<List<MarketProfitAndLoss>>> ListMarketProfitAndLoss(
-            ISet<string> marketIds,
-            bool includeSettledBets,
-            bool includeBsbBets,
-            bool netOfCommission)
+        public Task<BetfairServerResponse<List<MarketProfitAndLoss>>> ListMarketProfitAndLoss(ISet<string> marketIds, bool includeSettledBets, bool includeBsbBets, bool netOfCommission)
         {
             var args = new Dictionary<string, object>();
             args[MARKET_IDS] = marketIds;
             args[INCLUDE_SETTLED_BETS] = includeSettledBets;
             args[INCLUDE_BSP_BETS] = includeBsbBets;
             args[NET_OF_COMMISSION] = netOfCommission;
-            return networkClient.Invoke<List<MarketProfitAndLoss>>(exchange, Endpoint.Betting, LIST_MARKET_PROFIT_AND_LOSS, args);
+            return this.networkClient.Invoke<List<MarketProfitAndLoss>>(this.exchange, Endpoint.Betting, LIST_MARKET_PROFIT_AND_LOSS, args);
         }
 
         public Task<BetfairServerResponse<List<MarketTypeResult>>> ListMarketTypes(MarketFilter marketFilter)
         {
             var args = new Dictionary<string, object>();
             args[FILTER] = marketFilter;
-            return networkClient.Invoke<List<MarketTypeResult>>(exchange, Endpoint.Betting, LIST_MARKET_TYPES, args);
+            return this.networkClient.Invoke<List<MarketTypeResult>>(this.exchange, Endpoint.Betting, LIST_MARKET_TYPES, args);
         }
 
         public Task<BetfairServerResponse<List<TimeRangeResult>>> ListTimeRanges(MarketFilter marketFilter, TimeGranularity timeGranularity)
@@ -299,20 +301,17 @@ namespace BetfairNG
             var args = new Dictionary<string, object>();
             args[FILTER] = marketFilter;
             args[GRANULARITY] = timeGranularity;
-            return networkClient.Invoke<List<TimeRangeResult>>(exchange, Endpoint.Betting, LIST_TIME_RANGES, args);
+            return this.networkClient.Invoke<List<TimeRangeResult>>(this.exchange, Endpoint.Betting, LIST_TIME_RANGES, args);
         }
 
         public Task<BetfairServerResponse<List<VenueResult>>> ListVenues(MarketFilter marketFilter)
         {
             var args = new Dictionary<string, object>();
             args[FILTER] = marketFilter;
-            return networkClient.Invoke<List<VenueResult>>(exchange, Endpoint.Betting, LIST_VENUES, args);
+            return this.networkClient.Invoke<List<VenueResult>>(this.exchange, Endpoint.Betting, LIST_VENUES, args);
         }
 
-        public Task<BetfairServerResponse<PlaceExecutionReport>> PlaceOrders(
-            string marketId, 
-            IList<PlaceInstruction> placeInstructions,
-            string customerRef = null)
+        public Task<BetfairServerResponse<PlaceExecutionReport>> PlaceOrders(string marketId, IList<PlaceInstruction> placeInstructions, string customerRef = null)
         {
             var args = new Dictionary<string, object>();
 
@@ -320,13 +319,10 @@ namespace BetfairNG
             args[INSTRUCTIONS] = placeInstructions;
             args[CUSTOMER_REFERENCE] = customerRef;
 
-            return networkClient.Invoke<PlaceExecutionReport>(exchange, Endpoint.Betting, PLACE_ORDERS_METHOD, args);
+            return this.networkClient.Invoke<PlaceExecutionReport>(this.exchange, Endpoint.Betting, PLACE_ORDERS_METHOD, args);
         }
 
-        public Task<BetfairServerResponse<CancelExecutionReport>> CancelOrders(
-            string marketId = null,
-            IList<CancelInstruction> instructions = null,
-            string customerRef = null)
+        public Task<BetfairServerResponse<CancelExecutionReport>> CancelOrders(string marketId = null, IList<CancelInstruction> instructions = null, string customerRef = null)
         {
             var args = new Dictionary<string, object>();
 
@@ -334,13 +330,10 @@ namespace BetfairNG
             args[MARKET_ID] = marketId;
             args[CUSTOMER_REFERENCE] = customerRef;
 
-            return networkClient.Invoke<CancelExecutionReport>(exchange, Endpoint.Betting, CANCEL_ORDERS_METHOD, args);
+            return this.networkClient.Invoke<CancelExecutionReport>(this.exchange, Endpoint.Betting, CANCEL_ORDERS_METHOD, args);
         }
 
-        public Task<BetfairServerResponse<ReplaceExecutionReport>> ReplaceOrders(
-            string marketId,
-            IList<ReplaceInstruction> instructions,
-            string customerRef = null)
+        public Task<BetfairServerResponse<ReplaceExecutionReport>> ReplaceOrders(string marketId, IList<ReplaceInstruction> instructions, string customerRef = null)
         {
             var args = new Dictionary<string, object>();
 
@@ -348,13 +341,10 @@ namespace BetfairNG
             args[INSTRUCTIONS] = instructions;
             args[CUSTOMER_REFERENCE] = customerRef;
 
-            return networkClient.Invoke<ReplaceExecutionReport>(exchange, Endpoint.Betting, REPLACE_ORDERS_METHOD, args);
+            return this.networkClient.Invoke<ReplaceExecutionReport>(this.exchange, Endpoint.Betting, REPLACE_ORDERS_METHOD, args);
         }
 
-        public Task<BetfairServerResponse<UpdateExecutionReport>> UpdateOrders(
-            string marketId,
-            IList<UpdateInstruction> instructions,
-            string customerRef = null)
+        public Task<BetfairServerResponse<UpdateExecutionReport>> UpdateOrders(string marketId, IList<UpdateInstruction> instructions, string customerRef = null)
         {
             var args = new Dictionary<string, object>();
 
@@ -362,38 +352,33 @@ namespace BetfairNG
             args[INSTRUCTIONS] = instructions;
             args[CUSTOMER_REFERENCE] = customerRef;
 
-            return networkClient.Invoke<UpdateExecutionReport>(exchange, Endpoint.Betting, UPDATE_ORDERS_METHOD, args);
+            return this.networkClient.Invoke<UpdateExecutionReport>(this.exchange, Endpoint.Betting, UPDATE_ORDERS_METHOD, args);
         }
 
         public Task<BetfairServerResponse<AccountDetailsResponse>> GetAccountDetails()
         {
             var args = new Dictionary<string, object>();
-            return networkClient.Invoke<AccountDetailsResponse>(exchange, Endpoint.Account, GET_ACCOUNT_DETAILS, args);
+            return this.networkClient.Invoke<AccountDetailsResponse>(this.exchange, Endpoint.Account, GET_ACCOUNT_DETAILS, args);
         }
 
         public Task<BetfairServerResponse<AccountFundsResponse>> GetAccountFunds(Wallet wallet)
         {
             var args = new Dictionary<string, object>();
             args[WALLET] = wallet;
-            return networkClient.Invoke<AccountFundsResponse>(exchange, Endpoint.Account, GET_ACCOUNT_FUNDS, args);
+            return this.networkClient.Invoke<AccountFundsResponse>(this.exchange, Endpoint.Account, GET_ACCOUNT_FUNDS, args);
         }
 
-        public Task<BetfairServerResponse<AccountStatementReport>> GetAccountStatement(
-            int? fromRecord = null,
-            int? recordCount = null,
-            TimeRange itemDateRange = null,
-            IncludeItem? includeItem = null,
-            Wallet? wallet = null)
+        public Task<BetfairServerResponse<AccountStatementReport>> GetAccountStatement(int? fromRecord = null, int? recordCount = null, TimeRange itemDateRange = null, IncludeItem? includeItem = null, Wallet? wallet = null)
         {
             var args = new Dictionary<string, object>();
-            return networkClient.Invoke<AccountStatementReport>(exchange, Endpoint.Account, GET_ACCOUNT_STATEMENT, args);
+            return this.networkClient.Invoke<AccountStatementReport>(this.exchange, Endpoint.Account, GET_ACCOUNT_STATEMENT, args);
         }
 
         public Task<BetfairServerResponse<List<CurrencyRate>>> ListCurrencyRates(string fromCurrency)
         {
             var args = new Dictionary<string, object>();
             args[FROM_CURRENCY] = fromCurrency;
-            return networkClient.Invoke<List<CurrencyRate>>(exchange, Endpoint.Account, LIST_CURRENCY_RATES, args);
+            return this.networkClient.Invoke<List<CurrencyRate>>(this.exchange, Endpoint.Account, LIST_CURRENCY_RATES, args);
         }
 
         public Task<BetfairServerResponse<TransferResponse>> TransferFunds(Wallet from, Wallet to, double amount)
@@ -402,70 +387,7 @@ namespace BetfairNG
             args[FROM] = from;
             args[TO] = to;
             args[AMOUNT] = amount;
-            return networkClient.Invoke<TransferResponse>(exchange, Endpoint.Account, TRANSFER_FUNDS, args);
-        }
-    }
-
-    public enum Exchange
-    {
-        UK,
-        AUS
-    }
-
-    public enum Endpoint
-    {
-        Betting,
-        Account
-    }
-
-    public class LoginResponse
-    {
-        [JsonProperty(PropertyName = "sessionToken")]
-        public string SessionToken { get; set; }
-
-        [JsonProperty(PropertyName = "loginStatus")]
-        public string LoginStatus { get; set; }
-    }
-
-    public class KeepAliveResponse
-    {
-        [JsonProperty(PropertyName = "token")]
-        public string SessionToken { get; set; }
-        
-        [JsonProperty(PropertyName = "product")]
-        public string Product { get; set; }
-
-        [JsonProperty(PropertyName = "status")]
-        public string Status { get; set; }
-
-        [JsonProperty(PropertyName = "error")]
-        public string Error { get; set; }
-    }
-
-    public class BetfairServerResponse<T>
-    {
-        public T Response { get; set; }
-        public DateTime LastByte { get; set; }
-        public DateTime RequestStart { get; set; }
-        public long LatencyMS { get; set; }
-        public bool HasError { get; set; }
-        public BetfairServerException Error { get; set; }
-    }
-
-    public class BetfairServerException : System.Exception
-    {
-        public JObject ServerData { get; set; }
-        public JObject ServerDetail { get; set; }
-
-        public static BetfairServerException ToClientException(Data.Exceptions.Exception ex)
-        {
-            if (ex == null)
-                return null;
-
-            var exception = new BetfairServerException();
-            exception.ServerData = ex.Data;
-            exception.ServerDetail = ex.Detail;
-            return exception;
+            return this.networkClient.Invoke<TransferResponse>(this.exchange, Endpoint.Account, TRANSFER_FUNDS, args);
         }
     }
 }

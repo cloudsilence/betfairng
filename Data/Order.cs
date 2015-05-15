@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 
@@ -55,25 +53,21 @@ namespace BetfairNG.Data
 
         public override string ToString()
         {
-            return new StringBuilder().AppendFormat("BetId={0}", BetId)
-
-                        .AppendFormat(" : OrderType={0}", OrderType)
-                        .AppendFormat(" : OrderStatus={0}", Status)
-                        .AppendFormat(" : PersistenceType={0}", PersistenceType)
-                        .AppendFormat(" : Side={0}", Side)
-                        .AppendFormat(" : Size@Price={0}@{1}", SizeRemaining, Price)	// instead of simply Size
-                        .AppendFormat(" : BspLiability={0}", BspLiability)
-
-                        .AppendFormat(" : PlacedDate={0}", PlacedDate)
-                        .AppendFormat(" : AvgPriceMatched={0}", AvgPriceMatched)
-
-                        .AppendFormat(" : SizeMatched={0}", SizeMatched)
-                        .AppendFormat(" : SizeRemaining={0}", SizeRemaining)
-                        .AppendFormat(" : SizeLapsed={0}", SizeLapsed)
-                        .AppendFormat(" : SizeCancelled={0}", SizeCancelled)
-                        .AppendFormat(" : SizeVoided={0}", SizeVoided)
-
-                        .ToString();
+            return new StringBuilder().AppendFormat("BetId={0}", this.BetId)
+                                      .AppendFormat(" : OrderType={0}", this.OrderType)
+                                      .AppendFormat(" : OrderStatus={0}", this.Status)
+                                      .AppendFormat(" : PersistenceType={0}", this.PersistenceType)
+                                      .AppendFormat(" : Side={0}", this.Side)
+                                      .AppendFormat(" : Size@Price={0}@{1}", this.SizeRemaining, this.Price) // instead of simply Size
+                                      .AppendFormat(" : BspLiability={0}", this.BspLiability)
+                                      .AppendFormat(" : PlacedDate={0}", this.PlacedDate)
+                                      .AppendFormat(" : AvgPriceMatched={0}", this.AvgPriceMatched)
+                                      .AppendFormat(" : SizeMatched={0}", this.SizeMatched)
+                                      .AppendFormat(" : SizeRemaining={0}", this.SizeRemaining)
+                                      .AppendFormat(" : SizeLapsed={0}", this.SizeLapsed)
+                                      .AppendFormat(" : SizeCancelled={0}", this.SizeCancelled)
+                                      .AppendFormat(" : SizeVoided={0}", this.SizeVoided)
+                                      .ToString();
         }
     }
 }

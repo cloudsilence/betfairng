@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 
@@ -26,11 +24,11 @@ namespace BetfairNG.Data
         public override string ToString()
         {
             return new StringBuilder()
-                        .AppendFormat(" : BetId={0}", BetId)
-                        .AppendFormat(" : Side={0}", Side)
-                        .AppendFormat(" : Size@Price={0}@{1}", Size, Price)
-                        .AppendFormat(" : MatchDate={0}", MatchDate)
-                        .ToString();
+                .AppendFormat(" : BetId={0}", this.BetId)
+                .AppendFormat(" : Side={0}", this.Side)
+                .AppendFormat(" : Size@Price={0}@{1}", this.Size, this.Price)
+                .AppendFormat(" : MatchDate={0}", this.MatchDate)
+                .ToString();
         }
     }
 }

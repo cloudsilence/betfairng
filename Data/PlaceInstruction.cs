@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 
@@ -32,21 +29,21 @@ namespace BetfairNG.Data
         public override string ToString()
         {
             var sb = new StringBuilder()
-                .AppendFormat("OrderType={0}", OrderType)
-                .AppendFormat(" : SelectionId={0}", SelectionId)
-                .AppendFormat(" : Handicap={0}", Handicap)
-                .AppendFormat(" : Side={0}", Side);
+                .AppendFormat("OrderType={0}", this.OrderType)
+                .AppendFormat(" : SelectionId={0}", this.SelectionId)
+                .AppendFormat(" : Handicap={0}", this.Handicap)
+                .AppendFormat(" : Side={0}", this.Side);
 
-            switch (OrderType)
+            switch (this.OrderType)
             {
                 case OrderType.LIMIT:
-                    sb.AppendFormat(" : LimitOrder={0}", LimitOrder);
+                    sb.AppendFormat(" : LimitOrder={0}", this.LimitOrder);
                     break;
                 case OrderType.LIMIT_ON_CLOSE:
-                    sb.AppendFormat(" : LimitOnCloseOrder={0}", LimitOnCloseOrder);
+                    sb.AppendFormat(" : LimitOnCloseOrder={0}", this.LimitOnCloseOrder);
                     break;
                 case OrderType.MARKET_ON_CLOSE:
-                    sb.AppendFormat(" : MarketOnCloseOrder={0}", MarketOnCloseOrder);
+                    sb.AppendFormat(" : MarketOnCloseOrder={0}", this.MarketOnCloseOrder);
                     break;
             }
 

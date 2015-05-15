@@ -1,15 +1,12 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using Newtonsoft.Json;
 using System.Runtime.Serialization;
+using Newtonsoft.Json;
 
 namespace BetfairNG.Data
 {
-    public class APINGException : System.Exception
+    public class ApingException : Exception
     {
-        protected APINGException(SerializationInfo info, StreamingContext context)
+        protected ApingException(SerializationInfo info, StreamingContext context)
         {
             this.ErrorDetails = info.GetString("errorDetails");
             this.ErrorCode = info.GetString("errorCode");
@@ -20,7 +17,7 @@ namespace BetfairNG.Data
         public string ErrorDetails { get; set; }
 
         [JsonProperty(PropertyName = "errorCode")]
-        public string ErrorCode { get; set; }	
+        public string ErrorCode { get; set; }
 
         [JsonProperty(PropertyName = "requestUUID")]
         public string RequestUUID { get; set; }

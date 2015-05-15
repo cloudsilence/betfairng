@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using Newtonsoft.Json;
 
@@ -17,9 +14,9 @@ namespace BetfairNG.Data
         public override string ToString()
         {
             return new StringBuilder().AppendFormat("{0}", "EventTypeResult")
-                        .AppendFormat(" : {0}", EventType)
-                        .AppendFormat(" : MarketCount={0}", MarketCount)
-                        .ToString();
+                                      .AppendFormat(" : {0}", this.EventType)
+                                      .AppendFormat(" : MarketCount={0}", this.MarketCount)
+                                      .ToString();
         }
     }
 }
