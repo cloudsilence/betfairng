@@ -105,27 +105,27 @@ namespace ConsoleExample
 
             Console.WriteLine();
 
-            //var marketListener = MarketListener.Create(client, BFHelpers.HorseRacePriceProjection(), 1);
+            var marketListener = MarketListener.Create(client, BFHelpers.HorseRacePriceProjection(), 1);
 
-            //while (Markets.Count > 0)
-            //{
-            //    var waitHandle = new AutoResetEvent(false);
-            //    MarketCatalogue marketCatalogue;
-            //    Markets.TryDequeue(out marketCatalogue);
+            while (Markets.Count > 0)
+            {
+                var waitHandle = new AutoResetEvent(false);
+                MarketCatalogue marketCatalogue;
+                Markets.TryDequeue(out marketCatalogue);
 
-            //    var marketSubscription = marketListener.SubscribeMarketBook(marketCatalogue.MarketId)
-            //                                           .SubscribeOn(Scheduler.Default)
-            //                                           .Subscribe(
-            //                                               tick => Console.WriteLine(BFHelpers.MarketBookConsole(marketCatalogue, tick, marketCatalogue.Runners)),
-            //                                               () =>
-            //                                               {
-            //                                                   Console.WriteLine("Market finished");
-            //                                                   waitHandle.Set();
-            //                                               });
+                var marketSubscription = marketListener.SubscribeMarketBook(marketCatalogue.MarketId)
+                                                       .SubscribeOn(Scheduler.Default)
+                                                       .Subscribe(
+                                                           tick => Console.WriteLine(BFHelpers.MarketBookConsole(marketCatalogue, tick, marketCatalogue.Runners)),
+                                                           () =>
+                                                           {
+                                                               Console.WriteLine("Market finished");
+                                                               waitHandle.Set();
+                                                           });
 
-            //    waitHandle.WaitOne();
-            //    marketSubscription.Dispose();
-            //}
+                waitHandle.WaitOne();
+                marketSubscription.Dispose();
+            }
 
             Console.WriteLine("done.");
             Console.ReadLine();

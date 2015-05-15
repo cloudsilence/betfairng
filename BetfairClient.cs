@@ -154,6 +154,7 @@ namespace BetfairNG
             request.Method = "POST";
             request.ContentType = "application/x-www-form-urlencoded";
             request.Headers.Add("X-Application", this.appKey);
+            request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
             request.Accept = "*/*";
             if (this.proxy != null)
             {
