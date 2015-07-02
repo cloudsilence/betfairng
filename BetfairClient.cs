@@ -156,6 +156,7 @@ namespace BetfairNG
             request.Headers.Add("X-Application", this.appKey);
             request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
             request.Accept = "*/*";
+            
             if (this.proxy != null)
             {
                 request.Proxy = this.proxy;

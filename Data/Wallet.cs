@@ -7,6 +7,6 @@ namespace BetfairNG.Data
     public enum Wallet
     {
         UK,
-        AUSTRALIAN,
+        AUSTRALIAN
     }
 }

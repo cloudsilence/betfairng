@@ -25,6 +25,6 @@ namespace BetfairNG.Data
         INVALID_BET_ID,
         CANCELLED_NOT_PLACED,
         RELATED_ACTION_FAILED,
-        NO_ACTION_REQUIRED,
+        NO_ACTION_REQUIRED
     }
 }

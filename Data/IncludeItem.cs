@@ -9,6 +9,6 @@ namespace BetfairNG.Data
         ALL,
         DEPOSITS_WITHDRAWALS,
         EXCHANGE,
-        POKER_ROOM,
+        POKER_ROOM
     }
 }

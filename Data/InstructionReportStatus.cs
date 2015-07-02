@@ -8,6 +8,6 @@ namespace BetfairNG.Data
     {
         SUCCESS,
         FAILURE,
-        TIMEOUT,
+        TIMEOUT
     }
 }

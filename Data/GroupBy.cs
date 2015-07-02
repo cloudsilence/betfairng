@@ -10,6 +10,6 @@ namespace BetfairNG.Data
         EVENT,
         MARKET,
         SIDE,
-        BET,
+        BET
     }
 }

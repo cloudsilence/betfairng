@@ -67,7 +67,7 @@
     <Compile Include="BetfairClientSync.cs" />
     <Compile Include="BetfairServerException.cs" />
     <Compile Include="BetfairServerResponse.cs" />
-    <Compile Include="BFHelpers.cs" />
+    <Compile Include="BetfairHelpers.cs" />
     <Compile Include="Data\AccountDetailsResponse.cs" />
     <Compile Include="Data\AccountFundsResponse.cs" />
     <Compile Include="Data\AccountStatementReport.cs" />

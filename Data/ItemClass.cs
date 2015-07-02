@@ -6,6 +6,6 @@ namespace BetfairNG.Data
     [JsonConverter(typeof (StringEnumConverter))]
     public enum ItemClass
     {
-        UNKNOWN,
+        UNKNOWN
     }
 }

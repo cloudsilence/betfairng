@@ -9,6 +9,6 @@ namespace BetfairNG.Data
         SETTLED,
         VOIDED,
         LAPSED,
-        CANCELLED,
+        CANCELLED
     }
 }

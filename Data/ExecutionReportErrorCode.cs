@@ -22,6 +22,6 @@ namespace BetfairNG.Data
         DUPLICATE_BETIDS,
         NO_ACTION_REQUIRED,
         SERVICE_UNAVAILABLE,
-        REJECTED_BY_REGULATOR,
+        REJECTED_BY_REGULATOR
     }
 }

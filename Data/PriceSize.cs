@@ -13,8 +13,7 @@ namespace BetfairNG.Data
 
         public override string ToString()
         {
-            return new StringBuilder().AppendFormat("{0}@{1}", this.Size, this.Price)
-                                      .ToString();
+            return string.Format("{0}@{1}", this.Size, this.Price);
         }
     }
 }

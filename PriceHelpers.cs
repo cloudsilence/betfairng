@@ -5,7 +5,7 @@ namespace BetfairNG
 {
     public class PriceHelpers
     {
-        public static double[] Table =
+        public static readonly double[] Table =
         {
             1.01,
             1.02,
@@ -459,11 +459,7 @@ namespace BetfairNG
 
             var adjustedPrice = price * percentage;
 
-            if (percentage <= 1.0)
-            {
-                return RoundDownToNearestBetfairPrice(adjustedPrice);
-            }
-            return RoundUpToNearestBetfairPrice(adjustedPrice);
+            return percentage <= 1.0 ? RoundDownToNearestBetfairPrice(adjustedPrice) : RoundUpToNearestBetfairPrice(adjustedPrice);
         }
     }
 }

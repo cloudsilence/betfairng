@@ -6,21 +6,25 @@ using BetfairNG.Data;
 
 namespace BetfairNG
 {
-    public static class BFHelpers
+    public static class BetfairHelpers
     {
         public static MarketFilter HorseRaceFilter(string country = null)
         {
-            var marketFilter = new MarketFilter();
-            marketFilter.EventTypeIds = new HashSet<string> { "7" };
-            marketFilter.MarketStartTime = new TimeRange
+            var marketFilter = new MarketFilter
             {
-                From = DateTime.Now,
-                To = DateTime.Now.AddDays(1)
+                EventTypeIds = new HashSet<string> { "7" },
+                MarketStartTime = new TimeRange
+                {
+                    From = DateTime.Now,
+                    To = DateTime.Now.AddDays(1)
+                }
             };
+
             if (country != null)
             {
                 marketFilter.MarketCountries = new HashSet<string> { country };
             }
+
             marketFilter.MarketTypeCodes = new HashSet<String> { "WIN" };
 
             return marketFilter;
@@ -29,12 +33,24 @@ namespace BetfairNG
         public static PriceProjection HorseRacePriceProjection()
         {
             ISet<PriceData> priceData = new HashSet<PriceData>();
-            //get all prices from the exchange
+
+            // Get all prices from the exchange
             priceData.Add(PriceData.EX_TRADED);
             priceData.Add(PriceData.EX_ALL_OFFERS);
 
-            var priceProjection = new PriceProjection();
-            priceProjection.PriceData = priceData;
+            var priceProjection = new PriceProjection { PriceData = priceData };
+            return priceProjection;
+        }
+
+        public static PriceProjection CricketPriceProjection()
+        {
+            ISet<PriceData> priceData = new HashSet<PriceData>();
+
+            // Get all prices from the exchange
+            priceData.Add(PriceData.EX_TRADED);
+            priceData.Add(PriceData.EX_ALL_OFFERS);
+
+            var priceProjection = new PriceProjection { PriceData = priceData };
             return priceProjection;
         }
 
@@ -42,6 +58,15 @@ namespace BetfairNG
         {
             ISet<MarketProjection> marketProjections = new HashSet<MarketProjection>();
             marketProjections.Add(MarketProjection.RUNNER_METADATA);
+            marketProjections.Add(MarketProjection.MARKET_DESCRIPTION);
+            marketProjections.Add(MarketProjection.EVENT);
+
+            return marketProjections;
+        }
+
+        public static ISet<MarketProjection> CricketProjection()
+        {
+            ISet<MarketProjection> marketProjections = new HashSet<MarketProjection>();
             marketProjections.Add(MarketProjection.MARKET_DESCRIPTION);
             marketProjections.Add(MarketProjection.EVENT);
 
@@ -60,15 +85,16 @@ namespace BetfairNG
             {
                 return prices.First().Price;
             }
+
             return 0.0;
         }
 
-        public static List<Order> Backs(this List<Order> orders)
+        public static List<Order> Backs(this IEnumerable<Order> orders)
         {
             return orders.Where(c => c.Side == Side.BACK).ToList();
         }
 
-        public static List<Order> Lays(this List<Order> orders)
+        public static List<Order> Lays(this IEnumerable<Order> orders)
         {
             return orders.Where(c => c.Side == Side.LAY).ToList();
         }

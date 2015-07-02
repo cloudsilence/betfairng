@@ -17,21 +17,15 @@ namespace BetfairNG
         private static DateTime latestDataRequestStart = DateTime.Now;
         private static DateTime latestDataRequestFinish = DateTime.Now;
 
-        private static readonly object lockObj = new object();
+        private static readonly object LockObj = new object();
+
         private readonly BetfairClient client;
         private readonly int connectionCount;
-
-        private readonly ConcurrentDictionary<string, IObservable<MarketBook>> markets =
-            new ConcurrentDictionary<string, IObservable<MarketBook>>();
-
-        private readonly ConcurrentDictionary<string, IObserver<MarketBook>> observers =
-            new ConcurrentDictionary<string, IObserver<MarketBook>>();
-
+        private readonly ConcurrentDictionary<string, IObservable<MarketBook>> markets = new ConcurrentDictionary<string, IObservable<MarketBook>>();
+        private readonly ConcurrentDictionary<string, IObserver<MarketBook>> observers = new ConcurrentDictionary<string, IObserver<MarketBook>>();
         private readonly PriceProjection priceProjection;
 
-        private MarketListener(BetfairClient client,
-                               PriceProjection priceProjection,
-                               int connectionCount)
+        private MarketListener(BetfairClient client, PriceProjection priceProjection, int connectionCount)
         {
             this.client = client;
             this.priceProjection = priceProjection;
@@ -39,37 +33,28 @@ namespace BetfairNG
             Task.Run(() => this.PollMarketBooks());
         }
 
-        public static MarketListener Create(BetfairClient client,
-                                            PriceProjection priceProjection,
-                                            int connectionCount)
+        public static MarketListener Create(BetfairClient client, PriceProjection priceProjection, int connectionCount)
         {
-            if (listener == null)
-            {
-                listener = new MarketListener(client, priceProjection, connectionCount);
-            }
-
-            return listener;
+            return listener ?? (listener = new MarketListener(client, priceProjection, connectionCount));
         }
 
         public IObservable<Runner> SubscribeRunner(string marketId, long selectionId)
         {
             var marketTicks = this.SubscribeMarketBook(marketId);
 
-            var observable = Observable.Create(
-                (IObserver<Runner> observer) =>
+            var observable = Observable.Create((IObserver<Runner> observer) =>
+            {
+                var subscription = marketTicks.Subscribe(tick =>
                 {
-                    var subscription = marketTicks.Subscribe(tick =>
-                    {
-                        var runner = tick.Runners.First(c => c.SelectionId == selectionId);
-                        // attach the book
-                        runner.MarketBook = tick;
-                        observer.OnNext(runner);
-                    });
+                    var runner = tick.Runners.First(c => c.SelectionId == selectionId);
 
-                    return Disposable.Create(() => subscription.Dispose());
-                })
-                                       .Publish()
-                                       .RefCount();
+                    // attach the book
+                    runner.MarketBook = tick;
+                    observer.OnNext(runner);
+                });
+
+                return Disposable.Create(subscription.Dispose);
+            }).Publish().RefCount();
 
             return observable;
         }
@@ -82,26 +67,23 @@ namespace BetfairNG
                 return market;
             }
 
-            var observable = Observable.Create(
-                (IObserver<MarketBook> observer) =>
+            var observable = Observable.Create((IObserver<MarketBook> observer) =>
+            {
+                this.observers.AddOrUpdate(marketId, observer, (key, existingVal) => existingVal);
+                return Disposable.Create(() =>
                 {
-                    this.observers.AddOrUpdate(marketId, observer, (key, existingVal) => existingVal);
-                    return Disposable.Create(() =>
-                    {
-                        IObserver<MarketBook> ob;
-                        IObservable<MarketBook> o;
-                        this.markets.TryRemove(marketId, out o);
-                        this.observers.TryRemove(marketId, out ob);
-                    });
-                })
-                                       .Publish()
-                                       .RefCount();
+                    IObserver<MarketBook> ob;
+                    IObservable<MarketBook> o;
+                    this.markets.TryRemove(marketId, out o);
+                    this.observers.TryRemove(marketId, out ob);
+                });
+            }).Publish().RefCount();
 
             this.markets.AddOrUpdate(marketId, observable, (key, existingVal) => existingVal);
             return observable;
         }
 
-        // TODO:// replace this with the Rx scheduler 
+        // TODO: replace this with the Rx scheduler 
         private void PollMarketBooks()
         {
             for (var i = 0; i < this.connectionCount; i++)
@@ -112,14 +94,14 @@ namespace BetfairNG
                     {
                         if (this.markets.Count > 0)
                         {
-                            // TODO:// look at spinwait or signalling instead of this
+                            // TODO: look at spinwait or signalling instead of this
                             while (this.connectionCount > 1 && DateTime.Now.Subtract(lastRequestStart).TotalMilliseconds < (1000 / this.connectionCount))
                             {
                                 var waitMs = (1000 / this.connectionCount) - (int) DateTime.Now.Subtract(lastRequestStart).TotalMilliseconds;
                                 Thread.Sleep(waitMs > 0 ? waitMs : 0);
                             }
 
-                            lock (lockObj) lastRequestStart = DateTime.Now;
+                            lock (LockObj) lastRequestStart = DateTime.Now;
 
                             var book = this.client.ListMarketBook(this.markets.Keys.ToList(), this.priceProjection).Result;
 
@@ -130,7 +112,7 @@ namespace BetfairNG
                                 {
                                     continue;
                                 }
-                                lock (lockObj)
+                                lock (LockObj)
                                 {
                                     latestDataRequestStart = book.RequestStart;
                                     latestDataRequestFinish = book.LastByte;
@@ -139,18 +121,19 @@ namespace BetfairNG
                                 foreach (var market in book.Response)
                                 {
                                     IObserver<MarketBook> o;
-                                    if (this.observers.TryGetValue(market.MarketId, out o))
+                                    if (!this.observers.TryGetValue(market.MarketId, out o))
                                     {
-                                        // check to see if the market is finished
-                                        if (market.Status == MarketStatus.CLOSED ||
-                                            market.Status == MarketStatus.INACTIVE)
-                                        {
-                                            o.OnCompleted();
-                                        }
-                                        else
-                                        {
-                                            o.OnNext(market);
-                                        }
+                                        continue;
+                                    }
+
+                                    // check to see if the market is finished
+                                    if (market.Status == MarketStatus.CLOSED || market.Status == MarketStatus.INACTIVE)
+                                    {
+                                        o.OnCompleted();
+                                    }
+                                    else
+                                    {
+                                        o.OnNext(market);
                                     }
                                 }
                             }
@@ -164,11 +147,12 @@ namespace BetfairNG
                         }
                         else
                         {
-                            // TODO:// will die with rx scheduler
+                            // TODO: will die with rx scheduler
                             Thread.Sleep(500);
                         }
                     }
                 });
+
                 Thread.Sleep(1000 / this.connectionCount);
             }
         }

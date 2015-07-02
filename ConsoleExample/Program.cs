@@ -25,13 +25,14 @@ namespace ConsoleExample
             // find all the upcoming UK horse races (EventTypeId 7)
             var marketFilter = new MarketFilter
             {
-                EventTypeIds = new HashSet<string> { "7" },
-                MarketStartTime = new TimeRange
-                {
-                    From = DateTime.Now,
-                    To = DateTime.Now.AddDays(2)
-                },
-                MarketTypeCodes = new HashSet<String> { "WIN" }
+                EventTypeIds = new HashSet<string> { "4" },
+                InPlayOnly = true,
+                //MarketStartTime = new TimeRange
+                //{
+                //    From = DateTime.Now.AddHours(-2),
+                //    To = DateTime.Now.AddHours(5)
+                //},
+                MarketTypeCodes = new HashSet<String> { "MATCH_ODDS" }
             };
 
             Console.WriteLine("BetfairClient.ListTimeRanges()");
@@ -92,9 +93,9 @@ namespace ConsoleExample
             }
 
             var marketCatalogues = client.ListMarketCatalogue(
-                BFHelpers.HorseRaceFilter(),
-                BFHelpers.HorseRaceProjection(),
-                MarketSort.FIRST_TO_START,
+                marketFilter,
+                BetfairHelpers.CricketProjection(),
+                MarketSort.LAST_TO_START,
                 25).Result.Response;
 
             marketCatalogues.ForEach(c =>
@@ -105,7 +106,7 @@ namespace ConsoleExample
 
             Console.WriteLine();
 
-            var marketListener = MarketListener.Create(client, BFHelpers.HorseRacePriceProjection(), 1);
+            var marketListener = MarketListener.Create(client, BetfairHelpers.CricketPriceProjection(), 2);
 
             while (Markets.Count > 0)
             {
@@ -116,7 +117,7 @@ namespace ConsoleExample
                 var marketSubscription = marketListener.SubscribeMarketBook(marketCatalogue.MarketId)
                                                        .SubscribeOn(Scheduler.Default)
                                                        .Subscribe(
-                                                           tick => Console.WriteLine(BFHelpers.MarketBookConsole(marketCatalogue, tick, marketCatalogue.Runners)),
+                                                           tick => Console.WriteLine(BetfairHelpers.MarketBookConsole(marketCatalogue, tick, marketCatalogue.Runners)),
                                                            () =>
                                                            {
                                                                Console.WriteLine("Market finished");
@@ -126,6 +127,8 @@ namespace ConsoleExample
                 waitHandle.WaitOne();
                 marketSubscription.Dispose();
             }
+
+            var events = client.ListEvents(new MarketFilter { EventIds = new HashSet<string> { "27441541" } });
 
             Console.WriteLine("done.");
             Console.ReadLine();
