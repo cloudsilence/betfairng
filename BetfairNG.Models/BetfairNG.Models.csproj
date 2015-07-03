@@ -1,0 +1,140 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{67ADA973-E042-4178-9A55-38934B008028}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>BetfairNG.Models</RootNamespace>
+    <AssemblyName>BetfairNG.Models</AssemblyName>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=7.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="AccountDetailsResponse.cs" />
+    <Compile Include="AccountFundsResponse.cs" />
+    <Compile Include="AccountStatementReport.cs" />
+    <Compile Include="APINGException.cs" />
+    <Compile Include="BetStatus.cs" />
+    <Compile Include="CancelExecutionReport.cs" />
+    <Compile Include="CancelInstruction.cs" />
+    <Compile Include="CancelInstructionReport.cs" />
+    <Compile Include="ClearedOrderSummary.cs" />
+    <Compile Include="ClearedOrderSummaryReport.cs" />
+    <Compile Include="Competition.cs" />
+    <Compile Include="CompetitionResult.cs" />
+    <Compile Include="CountryCodeResult.cs" />
+    <Compile Include="CurrencyRate.cs" />
+    <Compile Include="CurrentOrderSummary.cs" />
+    <Compile Include="CurrentOrderSummaryReport.cs" />
+    <Compile Include="Event.cs" />
+    <Compile Include="EventResult.cs" />
+    <Compile Include="EventType.cs" />
+    <Compile Include="EventTypeResult.cs" />
+    <Compile Include="ExBestOffersOverrides.cs" />
+    <Compile Include="Exception.cs" />
+    <Compile Include="ExchangePrices.cs" />
+    <Compile Include="ExecutionReportErrorCode.cs" />
+    <Compile Include="ExecutionReportStatus.cs" />
+    <Compile Include="GroupBy.cs" />
+    <Compile Include="IncludeItem.cs" />
+    <Compile Include="InstructionReportErrorCode.cs" />
+    <Compile Include="InstructionReportStatus.cs" />
+    <Compile Include="ItemClass.cs" />
+    <Compile Include="ItemDescription.cs" />
+    <Compile Include="LimitOnCloseOrder.cs" />
+    <Compile Include="LimitOrder.cs" />
+    <Compile Include="MarketBettingType.cs" />
+    <Compile Include="MarketBook.cs" />
+    <Compile Include="MarketCatalogue.cs" />
+    <Compile Include="MarketDescription.cs" />
+    <Compile Include="MarketFilter.cs" />
+    <Compile Include="MarketOnCloseOrder.cs" />
+    <Compile Include="MarketProfitAndLoss.cs" />
+    <Compile Include="MarketProjection.cs" />
+    <Compile Include="MarketSort.cs" />
+    <Compile Include="MarketStatus.cs" />
+    <Compile Include="MarketTypeResult.cs" />
+    <Compile Include="Match.cs" />
+    <Compile Include="MatchProjection.cs" />
+    <Compile Include="Order.cs" />
+    <Compile Include="OrderBy.cs" />
+    <Compile Include="OrderProjection.cs" />
+    <Compile Include="OrderStatus.cs" />
+    <Compile Include="OrderType.cs" />
+    <Compile Include="PersistenceType.cs" />
+    <Compile Include="PlaceExecutionReport.cs" />
+    <Compile Include="PlaceInstruction.cs" />
+    <Compile Include="PlaceInstructionReport.cs" />
+    <Compile Include="PriceData.cs" />
+    <Compile Include="PriceProjection.cs" />
+    <Compile Include="PriceSize.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ReplaceExecutionReport.cs" />
+    <Compile Include="ReplaceInstruction.cs" />
+    <Compile Include="ReplaceInstructionReport.cs" />
+    <Compile Include="RollUpModel.cs" />
+    <Compile Include="Runner.cs" />
+    <Compile Include="RunnerDescription.cs" />
+    <Compile Include="RunnerId.cs" />
+    <Compile Include="RunnerProfitAndLoss.cs" />
+    <Compile Include="RunnerStatus.cs" />
+    <Compile Include="Side.cs" />
+    <Compile Include="SortDir.cs" />
+    <Compile Include="StartingPrices.cs" />
+    <Compile Include="StatementItem.cs" />
+    <Compile Include="StatementLegacyData.cs" />
+    <Compile Include="TimeGranularity.cs" />
+    <Compile Include="TimeRange.cs" />
+    <Compile Include="TimeRangeResult.cs" />
+    <Compile Include="TransferResponse.cs" />
+    <Compile Include="UpdateExecutionReport.cs" />
+    <Compile Include="UpdateInstruction.cs" />
+    <Compile Include="UpdateInstructionReport.cs" />
+    <Compile Include="VenueResult.cs" />
+    <Compile Include="Wallet.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

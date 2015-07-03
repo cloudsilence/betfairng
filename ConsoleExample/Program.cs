@@ -6,7 +6,7 @@ using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Threading;
 using BetfairNG;
-using BetfairNG.Data;
+using BetfairNG.Models;
 
 // This example pulls the latest horse races in the UK markets
 // and displays them to the console.
@@ -22,16 +22,16 @@ namespace ConsoleExample
             var client = new BetfairClient(Exchange.UK, settings.AppKey);
             client.Login(settings.CertificateLocation, settings.CertificatePassword, settings.Username, settings.Password);
 
-            // find all the upcoming UK horse races (EventTypeId 7)
+            // Find all the upcoming UK horse races (EventTypeId 7)
             var marketFilter = new MarketFilter
             {
-                EventTypeIds = new HashSet<string> { "4" },
+                EventTypeIds = new HashSet<string> { "7" },
                 InPlayOnly = true,
-                //MarketStartTime = new TimeRange
-                //{
-                //    From = DateTime.Now.AddHours(-2),
-                //    To = DateTime.Now.AddHours(5)
-                //},
+                MarketStartTime = new TimeRange
+                {
+                    From = DateTime.Now.AddHours(-2),
+                    To = DateTime.Now.AddHours(5)
+                },
                 MarketTypeCodes = new HashSet<String> { "MATCH_ODDS" }
             };
 
@@ -92,12 +92,7 @@ namespace ConsoleExample
                 throw new ApplicationException();
             }
 
-            var marketCatalogues = client.ListMarketCatalogue(
-                marketFilter,
-                BetfairHelpers.CricketProjection(),
-                MarketSort.LAST_TO_START,
-                25).Result.Response;
-
+            var marketCatalogues = client.ListMarketCatalogue(marketFilter, BetfairHelpers.CricketProjection(), MarketSort.LAST_TO_START, 25).Result.Response;
             marketCatalogues.ForEach(c =>
             {
                 Markets.Enqueue(c);
@@ -117,12 +112,12 @@ namespace ConsoleExample
                 var marketSubscription = marketListener.SubscribeMarketBook(marketCatalogue.MarketId)
                                                        .SubscribeOn(Scheduler.Default)
                                                        .Subscribe(
-                                                           tick => Console.WriteLine(BetfairHelpers.MarketBookConsole(marketCatalogue, tick, marketCatalogue.Runners)),
-                                                           () =>
-                                                           {
-                                                               Console.WriteLine("Market finished");
-                                                               waitHandle.Set();
-                                                           });
+                                                            tick => Console.WriteLine(BetfairHelpers.MarketBookConsole(marketCatalogue, tick, marketCatalogue.Runners)),
+                                                            () =>
+                                                            {
+                                                                Console.WriteLine("Market finished");
+                                                                waitHandle.Set();
+                                                            });
 
                 waitHandle.WaitOne();
                 marketSubscription.Dispose();
