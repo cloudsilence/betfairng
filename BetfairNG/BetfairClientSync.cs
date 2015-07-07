@@ -6,25 +6,18 @@ using BetfairNG.Models;
 namespace BetfairNG
 {
     /// <summary>
-    ///     Synchronous version of the Betfair client.
+    /// Synchronous version of the Betfair client.
     /// </summary>
     public class BetfairClientSync
     {
         private readonly BetfairClient client;
 
-        public BetfairClientSync(Exchange exchange,
-                                 string appKey,
-                                 string sessionToken,
-                                 Action preNetworkRequest = null,
-                                 WebProxy proxy = null)
+        public BetfairClientSync(Exchange exchange, string appKey, string sessionToken, Action preNetworkRequest = null, WebProxy proxy = null)
         {
             this.client = new BetfairClient(exchange, appKey, sessionToken, preNetworkRequest, proxy);
         }
 
-        public BetfairClientSync(Exchange exchange,
-                                 string appKey,
-                                 Action preNetworkRequest = null,
-                                 WebProxy proxy = null)
+        public BetfairClientSync(Exchange exchange, string appKey, Action preNetworkRequest = null, WebProxy proxy = null)
         {
             this.client = new BetfairClient(exchange, appKey, preNetworkRequest, proxy);
         }
@@ -49,27 +42,9 @@ namespace BetfairNG
             return this.client.ListCountries(marketFilter).Result;
         }
 
-        public BetfairServerResponse<CurrentOrderSummaryReport> ListCurrentOrders(
-            ISet<string> betIds = null,
-            ISet<string> marketIds = null,
-            OrderProjection? orderProjection = null,
-            TimeRange placedDateRange = null,
-            TimeRange dateRange = null,
-            OrderBy? orderBy = null,
-            SortDir? sortDir = null,
-            int? fromRecord = null,
-            int? recordCount = null)
+        public BetfairServerResponse<CurrentOrderSummaryReport> ListCurrentOrders(ISet<string> betIds = null, ISet<string> marketIds = null, OrderProjection? orderProjection = null, TimeRange placedDateRange = null, TimeRange dateRange = null, OrderBy? orderBy = null, SortDir? sortDir = null, int? fromRecord = null, int? recordCount = null)
         {
-            return this.client.ListCurrentOrders(
-                betIds,
-                marketIds,
-                orderProjection,
-                placedDateRange,
-                dateRange,
-                orderBy,
-                sortDir,
-                fromRecord,
-                recordCount).Result;
+            return this.client.ListCurrentOrders(betIds, marketIds, orderProjection, placedDateRange, dateRange, orderBy, sortDir, fromRecord, recordCount).Result;
         }
 
         public BetfairServerResponse<ClearedOrderSummaryReport> ListClearedOrders(
